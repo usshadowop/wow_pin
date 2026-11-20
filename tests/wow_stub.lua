@@ -238,6 +238,16 @@ end
 function Settings.CreateCheckbox(cat, setting, tooltip)
 	cat.initializers[#cat.initializers + 1] = { data = { setting = setting, name = setting.name, tooltip = tooltip } }
 end
+function Settings.CreateSliderOptions(minValue, maxValue, rate)
+	local o = { minValue = minValue, maxValue = maxValue, steps = (maxValue - minValue) / rate }
+	function o:SetLabelFormatter(labelType, fn) self.formatters = self.formatters or {}; self.formatters[labelType] = fn end
+	return o
+end
+function Settings.CreateSlider(cat, setting, options, tooltip)
+	cat.initializers[#cat.initializers + 1] = { data = { setting = setting, name = setting.name, options = options, tooltip = tooltip } }
+	Stub.addonSliders = Stub.addonSliders or {}
+	Stub.addonSliders[setting.variable] = options
+end
 function Settings.RegisterAddOnCategory(cat) Stub.addonCategories[#Stub.addonCategories + 1] = cat end
 function Settings.SetOnValueChangedCallback(variable, fn) Stub.valueCallbacks[variable] = fn end
 function Settings.OpenToCategory(id) Stub.openedCategory = id end

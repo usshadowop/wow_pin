@@ -77,7 +77,8 @@ minimap button, it becomes the Character Models minimap button at the same spot.
 | Right-click any control, or `/pins` | the menu: every control you've added, by kind, with a tick to show or hide each; lock; reset positions; allow settings that run Blizzard code; a button to open Options and add more |
 
 Options > AddOns > Option Pins has the same main switches: show everything, lock, stack the
-minimap buttons, and allow settings that run Blizzard code.
+minimap buttons, **Fan spacing** and **Fan distance** sliders (20 to 80 px, default 34) for the
+stacked dot's fan, and allow settings that run Blizzard code.
 
 Chat commands:
 
@@ -93,7 +94,7 @@ Chat commands:
 | `/pins list` | every control, its kind, whether it is on, the current value and any undo point |
 | `/pins show`, `/pins hide` | everything at once |
 | `/pins stack on\|off` | stack the minimap buttons into one dot, or unstack them (`/pins stack` toggles) |
-| `/pins fan <spacing> [distance]` | tune the fan: px between fanned dots (centre to centre) and px out from the ring, each 20 to 80; default 34 and 34. `/pins fan` shows the current numbers, `/pins fan reset` restores the defaults |
+| `/pins fan <spacing> [distance]` | tune the fan: px between fanned dots (centre to centre) and px out from the ring, each 20 to 80; default 34 and 34. `/pins fan` shows the current numbers, `/pins fan reset` restores the defaults; the same two numbers are sliders on Options > AddOns > Option Pins |
 | `/pins collapse`, `/pins expand` | fold the shared slider panel down to its header, or open it again |
 | `/pins lock`, `/pins unlock`, `/pins reset` | lock, unlock, or put everything back at its default spot |
 | `/pins blizzard on\|off` | allow settings that run Blizzard code (see below) |

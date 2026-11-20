@@ -187,6 +187,7 @@ local STACK_ANGLE = 170   -- where the stack dot first appears
 local FAN_OUT = 34        -- how far outside the ring the fan's first arc sits (and each further arc)
 local FAN_GAP = 34        -- centre-to-centre distance between neighbouring fanned dots
 local FAN_MIN, FAN_MAX = 20, 80
+QT.FAN = { gap = FAN_GAP, out = FAN_OUT, min = FAN_MIN, max = FAN_MAX }
 
 local function Stack()
 	local st = db.stack
@@ -905,7 +906,7 @@ SlashCmdList["OPTIONPINS"] = function(msg)
 			if o then st.out = o end
 			QT:RefreshBubbles()
 		elseif rest:lower() == "reset" then
-			st.gap, st.out = nil, nil
+			st.gap, st.out = FAN_GAP, FAN_OUT
 			QT:RefreshBubbles()
 		elseif rest ~= "" then
 			Print(string.format("usage: /pins fan <spacing> [distance], each %d-%d px, or /pins fan reset", FAN_MIN, FAN_MAX))

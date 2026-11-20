@@ -842,6 +842,27 @@ local function RegisterAddOnPage()
 	Add("OptionPins_Stack", "enabled", db.stack, "Stack minimap buttons into one",
 		false, "Fold all Option Pins minimap buttons into one dot with three dots in it. Click it to fan them out; click again to fold them back.",
 		function() QT:SetStacked(db.stack.enabled) end)
+	-- The fan's pixel spacing, as sliders (same values as /pins fan).
+	if Settings.CreateSlider and Settings.CreateSliderOptions then
+		local F = QT.FAN
+		local function AddFanSlider(variable, key, name, default, tooltip)
+			local setting = Settings.RegisterAddOnSetting(category, variable, key, db.stack, "number", name, default)
+			local options = Settings.CreateSliderOptions(F.min, F.max, 1)
+			local right = MinimalSliderWithSteppersMixin and MinimalSliderWithSteppersMixin.Label
+				and MinimalSliderWithSteppersMixin.Label.Right
+			if right and options.SetLabelFormatter then
+				options:SetLabelFormatter(right, function(v) return string.format("%d px", v) end)
+			end
+			Settings.CreateSlider(category, setting, options, tooltip)
+			if Settings.SetOnValueChangedCallback then
+				Settings.SetOnValueChangedCallback(variable, function() QT:RefreshBubbles() end)
+			end
+		end
+		AddFanSlider("OptionPins_FanSpacing", "gap", "Fan spacing", F.gap,
+			"Pixels between fanned minimap dots, centre to centre. A minimap button is 31 px across, so 34 leaves a gap of a couple of pixels. Same as /pins fan <spacing>.")
+		AddFanSlider("OptionPins_FanDistance", "out", "Fan distance", F.out,
+			"How far out from the minimap ring the fanned dots sit, in pixels. Same as the second number in /pins fan.")
+	end
 	Add("OptionPins_AllowProxy", "allowProxy", db, "Allow settings that run Blizzard code",
 		false, "About a third of the Options settings (graphics presets, action bars, nameplates, voice chat and others) apply by running Blizzard's own code. Changing those from an addon can cause 'Interface action blocked' errors, mostly after combat. Tick to allow them anyway; they are never changed in combat.",
 		function() QT:SetAllowProxy(db.allowProxy, true) end)
