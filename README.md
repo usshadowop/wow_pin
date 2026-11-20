@@ -46,12 +46,16 @@ commit for 1.60.1.70862, Nov 7 2026).
 
 ## Install
 
-1. Copy the `QuickToggle` folder into
-   `World of Warcraft\_forever_\Interface\AddOns\QuickToggle`
-   (the folder must be named `QuickToggle`, the same as the `.toc` file).
+1. Copy the `Option_Pin` folder into
+   `World of Warcraft\_forever_\Interface\AddOns\Option_Pin`
+   (the folder must be named `Option_Pin`, the same as the `.toc` file). From the GitHub zip
+   (`wow_pin-main.zip`), copy only the `Option_Pin` folder inside it.
 2. Restart the game or `/reload`.
 
-Your earlier Quick Toggle settings carry over, undo points included. If you had the old SD/HD
+If you used an earlier version from the `QuickToggle` folder, delete that folder. The game
+keeps add-on settings per folder name, so to keep your buttons, sliders and undo points, close
+the game and rename `WTF\Account\<account>\SavedVariables\QuickToggle.lua` to
+`Option_Pin.lua` before starting it again. Otherwise everything starts fresh. If you had the old SD/HD
 minimap button, it becomes the Character Models minimap button at the same spot.
 
 ## Use
@@ -139,8 +143,8 @@ later reads them can be blocked. Quick Toggle avoids that:
 
 ## Adding a hand-made toggle
 
-For a control with custom art, write a small file in `QuickToggle/Toggles/` (minimap button,
-`QuickToggle:Register{...}`) or `QuickToggle/Sliders/` (panel row, `QuickToggle:RegisterSlider{...}`),
+For a control with custom art, write a small file in `Option_Pin/Toggles/` (minimap button,
+`QuickToggle:Register{...}`) or `Option_Pin/Sliders/` (panel row, `QuickToggle:RegisterSlider{...}`),
 and list it in the `.toc`. `Toggles/Music.lua` and `Sliders/Display.lua` are the smallest
 examples. `QuickToggle:RegisterFloat{...}` and `QuickToggle:RegisterBlock{...}` make floating
 ones. To make a hand-made control the one an Options row's box drives, add its setting to the

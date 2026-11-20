@@ -1,6 +1,6 @@
 local here, addonDir = ...
 here = here or "tests"
-addonDir = addonDir or "QuickToggle"
+addonDir = addonDir or "Option_Pin"
 
 local Stub = dofile(here .. "/wow_stub.lua")
 
@@ -18,7 +18,7 @@ local function onRing(btn, angleDeg, radius, msg)
 		and math.abs(p[5] - radius * math.sin(math.rad(angleDeg))) < 0.01, msg)
 end
 
-Stub.LoadAddon(addonDir, "QuickToggle")
+Stub.LoadAddon(addonDir, "Option_Pin")
 local QT = QuickToggle
 local mu = QuickToggle_music_Button
 
@@ -1051,7 +1051,7 @@ Stub.frames = keep
 SettingsListElementMixin.Init = Stub.origRowInit
 Stub.addonCategories = {}
 QuickToggle = nil
-Stub.LoadAddon(addonDir, "QuickToggle")
+Stub.LoadAddon(addonDir, "Option_Pin")
 local QT2 = QuickToggle
 check(QT2 ~= QT, "addon reloaded")
 eq(QuickToggleDB, savedDB, "saved variables carried over")
