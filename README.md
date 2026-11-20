@@ -93,6 +93,7 @@ Chat commands:
 | `/pins list` | every control, its kind, whether it is on, the current value and any undo point |
 | `/pins show`, `/pins hide` | everything at once |
 | `/pins stack on\|off` | stack the minimap buttons into one dot, or unstack them (`/pins stack` toggles) |
+| `/pins fan <spacing> [distance]` | tune the fan: px between fanned dots (centre to centre) and px out from the ring, each 20 to 80; default 34 and 34. `/pins fan` shows the current numbers, `/pins fan reset` restores the defaults |
 | `/pins collapse`, `/pins expand` | fold the shared slider panel down to its header, or open it again |
 | `/pins lock`, `/pins unlock`, `/pins reset` | lock, unlock, or put everything back at its default spot |
 | `/pins blizzard on\|off` | allow settings that run Blizzard code (see below) |

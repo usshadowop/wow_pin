@@ -182,8 +182,11 @@ end
 -------------------------------------------------------------------------------
 
 local STACK_ANGLE = 170   -- where the stack dot first appears
-local FAN_OUT = 40        -- how far outside the ring the fan's first arc sits (and each further arc)
-local FAN_GAP = 38        -- px between fanned dots along the arc (a button is ~33 px across)
+-- A minimap button is 31 px plus its ring, so 34 px centre to centre leaves a gap of a
+-- couple of pixels. /pins fan <spacing> <distance> changes both in game (saved).
+local FAN_OUT = 34        -- how far outside the ring the fan's first arc sits (and each further arc)
+local FAN_GAP = 34        -- centre-to-centre distance between neighbouring fanned dots
+local FAN_MIN, FAN_MAX = 20, 80
 
 local function Stack()
 	local st = db.stack
@@ -194,6 +197,9 @@ local function Stack()
 end
 QT.StackState = function() return Stack() end
 
+local function FanGap() return Stack().gap or FAN_GAP end
+local function FanOut() return Stack().out or FAN_OUT end
+
 local function RingPoint(b, angleDeg, r)
 	local a = math.rad(angleDeg)
 	b:ClearAllPoints()
@@ -203,16 +209,20 @@ end
 -- Fan slot `i` of `n`: arcs outside the ring, centred on the stack dot's angle.
 local function FanPoint(b, i, n)
 	local R = MinimapRadius()
-	local radius = R + FAN_OUT
+	local gap, out = FanGap(), FanOut()
+	local radius = R + out
 	local arc, j, m = 0, i, n
+	local step
 	while true do
-		local cap = math.max(1, math.floor(2 * math.pi * radius / FAN_GAP))
+		-- Angle between neighbours so their centres are exactly `gap` apart (a chord).
+		step = 2 * math.asin(math.min(1, gap / (2 * radius)))
+		local cap = math.max(1, math.floor(2 * math.pi / step))
 		if j <= cap then m = math.min(m, cap) break end
 		j, m = j - cap, m - cap
 		arc = arc + 1
-		radius = radius + FAN_OUT
+		radius = radius + out
 	end
-	local step = math.deg(FAN_GAP / radius)
+	step = math.deg(step)
 	RingPoint(b, Stack().angle + (j - (m + 1) / 2) * step, radius)
 end
 
@@ -886,6 +896,22 @@ SlashCmdList["OPTIONPINS"] = function(msg)
 	elseif cmd == "announce" then
 		db.announce = (rest:lower() ~= "off")
 		Print("chat announcement " .. (db.announce and "on" or "off") .. ".")
+	elseif cmd == "fan" then
+		local g, o = rest:match("^(%d+)%s*(%d*)$")
+		g, o = tonumber(g), tonumber(o)
+		local st = Stack()
+		if g and g >= FAN_MIN and g <= FAN_MAX and (not o or (o >= FAN_MIN and o <= FAN_MAX)) then
+			st.gap = g
+			if o then st.out = o end
+			QT:RefreshBubbles()
+		elseif rest:lower() == "reset" then
+			st.gap, st.out = nil, nil
+			QT:RefreshBubbles()
+		elseif rest ~= "" then
+			Print(string.format("usage: /pins fan <spacing> [distance], each %d-%d px, or /pins fan reset", FAN_MIN, FAN_MAX))
+			return
+		end
+		Print(string.format("fanned dots: %d px apart, %d px out from the ring (defaults %d and %d).", FanGap(), FanOut(), FAN_GAP, FAN_OUT))
 	elseif cmd == "stack" then
 		local arg = rest:lower()
 		local on
@@ -900,7 +926,7 @@ SlashCmdList["OPTIONPINS"] = function(msg)
 		local t, k = rest:match("^(%S+)%s+(%S+)$")
 		BindKey(t and t:lower(), k)
 	else
-		Print("commands: /pins (menu), /pins options, /pins <toggle> [value], /pins <slider> <value>|undo, enable|disable <name>, list, show, hide, stack on|off, collapse, expand, lock, unlock, reset, blizzard on|off, sound on|off, announce on|off, key <toggle> <KEY>")
+		Print("commands: /pins (menu), /pins options, /pins <toggle> [value], /pins <slider> <value>|undo, enable|disable <name>, list, show, hide, stack on|off, fan <spacing> [distance], collapse, expand, lock, unlock, reset, blizzard on|off, sound on|off, announce on|off, key <toggle> <KEY>")
 	end
 end
 

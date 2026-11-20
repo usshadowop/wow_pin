@@ -1115,8 +1115,8 @@ stackB.scripts.OnLeave(stackB)
 stackB.scripts.OnClick(stackB, "LeftButton")
 eq(QT:StackState().open, true, "click opens the stack")
 local n = #stacked
-local fanR = 130 + 40
-local step = math.deg(38 / fanR)
+local fanR = 130 + 34
+local step = 2 * math.deg(math.asin(34 / (2 * fanR)))
 for i, def in ipairs(stacked) do
 	local b = QT.buttons[def.key]
 	eq(b:IsShown(), true, def.name .. " fanned out")
@@ -1131,6 +1131,33 @@ eq(musicB:IsShown(), true, "and the fan stays open")
 musicB.scripts.OnClick(musicB, "LeftButton")
 musicB.scripts.OnDragStart(musicB)
 check(musicB.scripts.OnUpdate == nil, "fanned dots can't be dragged out of the fan")
+-- Neighbouring fanned dots are 34 px apart centre to centre (a couple of px between them),
+-- and the nearest sit 34 px out from the stack dot's ring position.
+local function centre(b) local p = { b:GetPoint(1) } return p[4], p[5] end
+local ax, ay = centre(QT.buttons[stacked[1].key])
+local bx, by = centre(QT.buttons[stacked[2].key])
+near(math.sqrt((ax - bx) ^ 2 + (ay - by) ^ 2), 34, "neighbouring fanned dots 34 px apart")
+local sx, sy = centre(stackB)
+local nearest = 1e9
+for _, def in ipairs(stacked) do
+	local x, y = centre(QT.buttons[def.key])
+	nearest = math.min(nearest, math.sqrt((x - sx) ^ 2 + (y - sy) ^ 2))
+end
+check(nearest >= 34 and nearest < 38, "nearest fanned dot sits just clear of the stack dot (" .. string.format("%.1f", nearest) .. " px)")
+-- Tunable in game.
+Stub.Slash("fan 30 28")
+eq(OptionPinsDB.stack.gap .. "/" .. OptionPinsDB.stack.out, "30/28", "/pins fan sets spacing and distance")
+ax, ay = centre(QT.buttons[stacked[1].key])
+bx, by = centre(QT.buttons[stacked[2].key])
+near(math.sqrt((ax - bx) ^ 2 + (ay - by) ^ 2), 30, "fan re-laid out at once")
+check(Stub.LastPrint():find("30 px apart, 28 px out") ~= nil, "and says the new numbers")
+Stub.Slash("fan 5")
+check(Stub.LastPrint():find("usage") ~= nil, "out-of-range values are refused")
+eq(OptionPinsDB.stack.gap, 30, "and change nothing")
+Stub.Slash("fan reset")
+eq(OptionPinsDB.stack.gap, nil, "/pins fan reset goes back to the defaults")
+Stub.Slash("fan")
+check(Stub.LastPrint():find("34 px apart, 34 px out") ~= nil, "bare /pins fan shows the current numbers")
 stackB.scripts.OnClick(stackB, "LeftButton")
 eq(QT:StackState().open, false, "click again folds them back")
 eq(musicB:IsShown(), false, "folded away")

@@ -2,7 +2,7 @@
 ## Title: Option Pins
 ## Notes: Turn any setting in the Options window into a minimap button, a floating button or a slider with undo. Tick the boxes next to each setting in Esc > Options.
 ## Author: usshadowop
-## Version: 3.2.1
+## Version: 3.2.2
 ## SavedVariables: OptionPinsDB, QuickToggleDB
 ## IconTexture: Interface\Icons\INV_Misc_Gear_01
 
