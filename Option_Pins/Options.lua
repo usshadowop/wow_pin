@@ -839,6 +839,9 @@ local function RegisterAddOnPage()
 		function() QT:Refresh() end)
 	Add("OptionPins_Locked", "locked", db, "Lock buttons and sliders in place",
 		false, "Stops them being dragged by accident.")
+	Add("OptionPins_Stack", "enabled", db.stack, "Stack minimap buttons into one",
+		false, "Fold all Option Pins minimap buttons into one dot with three dots in it. Click it to fan them out; click again to fold them back.",
+		function() QT:SetStacked(db.stack.enabled) end)
 	Add("OptionPins_AllowProxy", "allowProxy", db, "Allow settings that run Blizzard code",
 		false, "About a third of the Options settings (graphics presets, action bars, nameplates, voice chat and others) apply by running Blizzard's own code. Changing those from an addon can cause 'Interface action blocked' errors, mostly after combat. Tick to allow them anyway; they are never changed in combat.",
 		function() QT:SetAllowProxy(db.allowProxy, true) end)

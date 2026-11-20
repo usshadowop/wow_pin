@@ -57,6 +57,7 @@ local DEFAULTS = {
 	undo = {},         -- setting (undo key) -> value to undo back to
 	sliderPos = false, -- slider panel { point, relPoint, x, y } relative to UIParent; false = default
 	sliderCollapsed = false, -- slider panel folded down to its header
+	stack = {},        -- { enabled, angle, open }: minimap buttons stacked into one "..." dot
 }
 
 local db -- OptionPinsDB after ADDON_LOADED
@@ -173,17 +174,62 @@ local function MinimapRadius()
 	return w / 2 + RING_PAD
 end
 
-function QT:Place(def)
-	local b = self.buttons[def.key]
-	if not b then return end
-	local a = math.rad(self:Settings(def.key).angle)
-	local r = MinimapRadius()
+-------------------------------------------------------------------------------
+-- Stacking: with "Stack minimap buttons" on and two or more Option Pins buttons showing,
+-- they fold into one "..." dot on the ring. Clicking it fans them out in an arc just
+-- inside the ring, centred on the dot (inside, so the fan stays on screen whichever
+-- corner the minimap is in); clicking it again folds them back.
+-------------------------------------------------------------------------------
+
+local STACK_ANGLE = 170   -- where the stack dot first appears
+local FAN_INSET = 36      -- how far inside the ring the fan's first arc sits
+local FAN_GAP = 34        -- px between fanned dots along the arc
+
+local function Stack()
+	local st = db.stack
+	if st.enabled == nil then st.enabled = false end
+	if st.angle == nil then st.angle = STACK_ANGLE end
+	if st.open == nil then st.open = false end
+	return st
+end
+QT.StackState = function() return Stack() end
+
+local function RingPoint(b, angleDeg, r)
+	local a = math.rad(angleDeg)
 	b:ClearAllPoints()
 	b:SetPoint("CENTER", Minimap or UIParent, "CENTER", math.cos(a) * r, math.sin(a) * r)
 end
 
+-- Fan slot `i` of `n`: arcs inside the ring, centred on the stack dot's angle.
+local function FanPoint(b, i, n)
+	local R = MinimapRadius()
+	local radius = R - FAN_INSET
+	local arc, j, m = 0, i, n
+	while true do
+		local cap = math.max(1, math.floor(2 * math.pi * radius / FAN_GAP))
+		if j <= cap then m = math.min(m, cap) break end
+		j, m = j - cap, m - cap
+		arc = arc + 1
+		radius = radius - FAN_INSET
+	end
+	local step = math.deg(FAN_GAP / radius)
+	RingPoint(b, Stack().angle + (j - (m + 1) / 2) * step, radius)
+end
+
+function QT:Place(def)
+	local b = self.buttons[def.key]
+	if not b then return end
+	local slot = self.fanSlot and self.fanSlot[def.key]
+	if slot then
+		FanPoint(b, slot, self.fanCount)
+	else
+		RingPoint(b, self:Settings(def.key).angle, MinimapRadius())
+	end
+end
+
 function QT:PlaceAll()
 	for _, def in ipairs(self.toggles) do self:Place(def) end
+	if self.stackButton then RingPoint(self.stackButton, Stack().angle, MinimapRadius()) end
 end
 
 if Minimap and Minimap.HookScript then
@@ -192,14 +238,21 @@ if Minimap and Minimap.HookScript then
 	end)
 end
 
-local function OnDrag(self)
+-- Angle of the cursor around the minimap centre.
+local function CursorAngle()
 	local parent = Minimap or UIParent
 	local mx, my = parent:GetCenter()
 	local cx, cy = GetCursorPosition()
 	local scale = parent:GetEffectiveScale()
-	if not (mx and cx and scale and scale > 0) then return end
+	if not (mx and cx and scale and scale > 0) then return nil end
 	cx, cy = cx / scale, cy / scale
-	QT:Settings(self.def.key).angle = math.deg(math.atan2(cy - my, cx - mx))
+	return math.deg(math.atan2(cy - my, cx - mx))
+end
+
+local function OnDrag(self)
+	local a = CursorAngle()
+	if not a then return end
+	QT:Settings(self.def.key).angle = a
 	QT:Place(self.def)
 end
 
@@ -269,7 +322,7 @@ local function CreateButton(def)
 
 	b:SetScript("OnClick", function(self, mouseButton) QT:ToggleClick(self, mouseButton) end)
 	b:SetScript("OnDragStart", function(self)
-		if db.locked then return end
+		if db.locked or (QT.fanSlot and QT.fanSlot[def.key]) then return end -- fanned dots stay in the fan
 		self:SetScript("OnUpdate", OnDrag)
 	end)
 	b:SetScript("OnDragStop", function(self)
@@ -291,15 +344,123 @@ function QT:Update(def)
 	if GameTooltip and GameTooltip:IsOwned(b) then OnEnter(b) end
 end
 
-function QT:ApplyVisibility(def)
-	local b = self.buttons[def.key]
-	if not b then return end
-	if db.shown and self:IsEnabled(def.key) and self:Available(def) then
-		self:Update(def)
-		b:Show()
-	else
-		b:Hide()
+local function Wanted(def)
+	return db.shown and QT:IsEnabled(def.key) and QT:Available(def)
+end
+
+-- The stack dot: the usual round button with three yellow dots in it.
+local function StackTooltip(self)
+	if not GameTooltip then return end
+	GameTooltip:SetOwner(self, "ANCHOR_LEFT")
+	GameTooltip:ClearLines()
+	GameTooltip:AddLine("Option Pins (" .. #(QT.stacked or {}) .. ")")
+	for _, def in ipairs(QT.stacked or {}) do
+		GameTooltip:AddDoubleLine(def.name, def.Describe(def.Get()), 1, 1, 1, 1, 0.82, 0)
 	end
+	GameTooltip:AddLine(Stack().open and "Click to fold them back in." or "Click to show them.", 0.6, 1, 0.6)
+	GameTooltip:AddLine(db.locked and "Right-click for the menu. Locked in place." or "Right-click for the menu. Drag to move.", 0.5, 0.5, 0.5)
+	GameTooltip:Show()
+end
+
+local function CreateStackButton()
+	local b = CreateFrame("Button", "OptionPinsStackButton", Minimap or UIParent)
+	b:SetSize(31, 31)
+	b:SetFrameStrata("MEDIUM")
+	b:SetFrameLevel(9)
+	b:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	b:RegisterForDrag("LeftButton")
+	b:SetHighlightTexture("Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight")
+	b.bg = b:CreateTexture(nil, "BACKGROUND")
+	b.bg:SetSize(21, 21)
+	b.bg:SetTexture("Interface\\Minimap\\UI-Minimap-Background")
+	b.bg:SetPoint("TOPLEFT", 6, -5)
+	b.disc = b:CreateTexture(nil, "BORDER")
+	b.disc:SetSize(19, 19)
+	b.disc:SetColorTexture(0.05, 0.05, 0.05, 0.9)
+	b.disc:SetPoint("CENTER", b.bg, "CENTER")
+	b.ring = b:CreateTexture(nil, "OVERLAY")
+	b.ring:SetSize(53, 53)
+	b.ring:SetTexture("Interface\\Minimap\\MiniMap-TrackingBorder")
+	b.ring:SetPoint("TOPLEFT")
+	b.dots = {}
+	for i = -1, 1 do
+		local d = b:CreateTexture(nil, "ARTWORK")
+		d:SetTexture("Interface\\CHARACTERFRAME\\TempPortraitAlphaMask") -- a filled disc
+		d:SetVertexColor(QT.YELLOW[1], QT.YELLOW[2], QT.YELLOW[3])
+		d:SetSize(4, 4)
+		d:SetPoint("CENTER", b.disc, "CENTER", i * 5, 0)
+		b.dots[#b.dots + 1] = d
+	end
+	b:SetScript("OnClick", function(self, mouseButton)
+		if mouseButton == "RightButton" then
+			QT:OpenMenu(self)
+		else
+			QT:SetStackOpen(not Stack().open)
+		end
+	end)
+	b:SetScript("OnDragStart", function(self)
+		if db.locked then return end
+		self:SetScript("OnUpdate", function()
+			local a = CursorAngle()
+			if not a then return end
+			Stack().angle = a
+			QT:PlaceAll()
+		end)
+	end)
+	b:SetScript("OnDragStop", function(self) self:SetScript("OnUpdate", nil) end)
+	b:SetScript("OnEnter", StackTooltip)
+	b:SetScript("OnLeave", OnLeave)
+	b:Hide()
+	return b
+end
+
+-- Decides, for all minimap buttons at once, which show, where, and whether the stack dot
+-- shows: stacked needs the option on and at least two buttons to stack.
+function QT:RefreshBubbles()
+	local st = Stack()
+	local wanted = {}
+	for _, def in ipairs(self.toggles) do
+		if self.buttons[def.key] and Wanted(def) then wanted[#wanted + 1] = def end
+	end
+	local stacked = st.enabled and #wanted >= 2
+	self.stacked = stacked and wanted or nil
+	self.fanSlot, self.fanCount = nil, 0
+	if stacked and st.open then
+		self.fanSlot, self.fanCount = {}, #wanted
+		for i, def in ipairs(wanted) do self.fanSlot[def.key] = i end
+	end
+	for _, def in ipairs(self.toggles) do
+		local b = self.buttons[def.key]
+		if b then
+			self:Place(def)
+			if Wanted(def) and (not stacked or st.open) then
+				self:Update(def)
+				b:Show()
+			else
+				b:Hide()
+			end
+		end
+	end
+	if not self.stackButton then self.stackButton = CreateStackButton() end
+	RingPoint(self.stackButton, st.angle, MinimapRadius())
+	if stacked then self.stackButton:Show() else self.stackButton:Hide() end
+	if GameTooltip and GameTooltip:IsOwned(self.stackButton) then StackTooltip(self.stackButton) end
+end
+
+function QT:ApplyVisibility(def)
+	self:RefreshBubbles()
+end
+
+function QT:SetStacked(on)
+	local st = Stack()
+	st.enabled = on and true or false
+	st.open = false
+	self:RefreshBubbles()
+end
+
+function QT:SetStackOpen(open)
+	Stack().open = open and true or false
+	self:RefreshBubbles()
 end
 
 function QT:Setup(def)
@@ -315,7 +476,7 @@ do
 	local k = QT.kinds.bubble
 	k.Setup = function(def) QT:Setup(def) end
 	k.Refresh = function(def) QT:ApplyVisibility(def) end
-	k.RefreshAll = function() for _, def in ipairs(QT.toggles) do QT:ApplyVisibility(def) end end
+	k.RefreshAll = function() QT:RefreshBubbles() end
 	k.Sync = function()
 		for _, def in ipairs(QT.toggles) do
 			local b = QT.buttons[def.key]
@@ -324,7 +485,8 @@ do
 	end
 	k.Reset = function()
 		for _, def in ipairs(QT.toggles) do QT:Settings(def.key).angle = def.defaultAngle or 220 end
-		QT:PlaceAll()
+		Stack().angle = STACK_ANGLE
+		QT:RefreshBubbles()
 	end
 end
 
@@ -465,6 +627,7 @@ local function OpenFallbackMenu(owner)
 			return c
 		end
 		m.lock = Check("Lock buttons and sliders in place", function(self) db.locked = self:GetChecked() and true or false end)
+		m.stack = Check("Stack minimap buttons into one", function(self) QT:SetStacked(self:GetChecked()) end)
 		m.proxy = Check("Allow settings that run Blizzard code", function(self)
 			if QT.SetAllowProxy then QT:SetAllowProxy(self:GetChecked() and true or false) end
 		end)
@@ -521,14 +684,17 @@ local function OpenFallbackMenu(owner)
 	m.lock:ClearAllPoints()
 	m.lock:SetPoint("TOPLEFT", 10, y - 6)
 	m.lock:SetChecked(db.locked)
+	m.stack:ClearAllPoints()
+	m.stack:SetPoint("TOPLEFT", 10, y - 30)
+	m.stack:SetChecked(Stack().enabled)
 	m.proxy:ClearAllPoints()
-	m.proxy:SetPoint("TOPLEFT", 10, y - 30)
+	m.proxy:SetPoint("TOPLEFT", 10, y - 54)
 	m.proxy:SetChecked(db.allowProxy)
 	m.reset:ClearAllPoints()
-	m.reset:SetPoint("TOPLEFT", 14, y - 60)
+	m.reset:SetPoint("TOPLEFT", 14, y - 84)
 	m.options:ClearAllPoints()
 	m.options:SetPoint("LEFT", m.reset, "RIGHT", 6, 0)
-	m:SetHeight(-y + 96)
+	m:SetHeight(-y + 120)
 
 	m:SetWidth(260)
 	m:ClearAllPoints()
@@ -568,6 +734,9 @@ function QT:OpenMenu(owner)
 			root:CreateCheckbox("Lock buttons and sliders in place",
 				function() return db.locked end,
 				function() db.locked = not db.locked end)
+			root:CreateCheckbox("Stack minimap buttons into one",
+				function() return Stack().enabled end,
+				function() QT:SetStacked(not Stack().enabled) end)
 			if QT.SetAllowProxy then
 				root:CreateCheckbox("Allow settings that run Blizzard code",
 					function() return db.allowProxy end,
@@ -717,6 +886,12 @@ SlashCmdList["OPTIONPINS"] = function(msg)
 	elseif cmd == "announce" then
 		db.announce = (rest:lower() ~= "off")
 		Print("chat announcement " .. (db.announce and "on" or "off") .. ".")
+	elseif cmd == "stack" then
+		local arg = rest:lower()
+		local on
+		if arg == "" then on = not Stack().enabled else on = (arg ~= "off") end
+		QT:SetStacked(on)
+		Print(on and "minimap buttons stacked into one dot. Click it to fan them out." or "minimap buttons unstacked.")
 	elseif cmd == "collapse" or cmd == "expand" then
 		if QT.SetSlidersCollapsed then QT:SetSlidersCollapsed(cmd == "collapse") end
 	elseif cmd == "blizzard" or cmd == "proxy" then
@@ -725,7 +900,7 @@ SlashCmdList["OPTIONPINS"] = function(msg)
 		local t, k = rest:match("^(%S+)%s+(%S+)$")
 		BindKey(t and t:lower(), k)
 	else
-		Print("commands: /pins (menu), /pins options, /pins <toggle> [value], /pins <slider> <value>|undo, enable|disable <name>, list, show, hide, collapse, expand, lock, unlock, reset, blizzard on|off, sound on|off, announce on|off, key <toggle> <KEY>")
+		Print("commands: /pins (menu), /pins options, /pins <toggle> [value], /pins <slider> <value>|undo, enable|disable <name>, list, show, hide, stack on|off, collapse, expand, lock, unlock, reset, blizzard on|off, sound on|off, announce on|off, key <toggle> <KEY>")
 	end
 end
 
@@ -767,6 +942,7 @@ ev:SetScript("OnEvent", function(self, event, arg1, ...)
 		for k, v in pairs(DEFAULTS) do
 			if db[k] == nil then db[k] = (type(v) == "table") and {} or v end
 		end
+		Stack()
 		-- 1.1/1.2 kept undo points inside db.sliders[key].revert.
 		for key, s in pairs(db.sliders) do
 			if s.revert ~= nil then
@@ -796,6 +972,7 @@ ev:SetScript("OnEvent", function(self, event, arg1, ...)
 			end
 		end
 	elseif event == "PLAYER_ENTERING_WORLD" then
+		QT:RefreshBubbles()
 		QT:PlaceAll()
 		if QT.PlaceSliderPanel then QT:PlaceSliderPanel() end
 		QT:Refresh()

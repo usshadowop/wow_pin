@@ -1085,6 +1085,113 @@ eq(pairFrame.w, 2, "same 2 px bar")
 SettingsListElementMixin.Init(rf2, iAutoLoot)
 eq(pairFrame:IsShown(), false, "hidden when the row is reused for a single setting")
 
+-------------------------------------------------------------------------------
+-- Stacked dot: minimap buttons fold into one "..." dot that fans them out
+-------------------------------------------------------------------------------
+local stackB = OptionPinsStackButton
+eq(stackB and stackB:IsShown(), false, "no stack dot while stacking is off")
+Stub.Slash("stack on")
+check(Stub.LastPrint():find("stacked into one dot") ~= nil, "/pins stack on")
+stackB = OptionPinsStackButton
+local stacked = QT.stacked
+check(stacked and #stacked >= 3, "every showing minimap button is in the stack (" .. (stacked and #stacked or 0) .. ")")
+eq(stackB:IsShown(), true, "the stack dot shows")
+eq(stackB.parent, Minimap, "on the minimap")
+local anyShown = false
+for _, def in ipairs(stacked) do if QT.buttons[def.key]:IsShown() then anyShown = true end end
+eq(anyShown, false, "the stacked buttons are folded away")
+eq(#stackB.dots, 3, "three dots in the stack dot")
+check(stackB.dots[1].vcolor[1] == 1 and stackB.dots[1].vcolor[3] == 0, "yellow dots")
+local d1, d3 = { stackB.dots[1]:GetPoint(1) }, { stackB.dots[3]:GetPoint(1) }
+check(d1[4] == -5 and d3[4] == 5, "side by side, centred")
+check(stackB.ring.texture:find("TrackingBorder") ~= nil, "same round button look")
+onRing(stackB, 170, 130, "stack dot sits on the ring")
+stackB.scripts.OnEnter(stackB)
+check(GameTooltip.lines[1] == "Option Pins (" .. #stacked .. ")", "tooltip counts what's inside")
+check(table.concat(GameTooltip.lines, " "):find("Music") ~= nil, "and lists them")
+stackB.scripts.OnLeave(stackB)
+
+-- Click: fan out in an arc just inside the ring, centred on the stack dot.
+stackB.scripts.OnClick(stackB, "LeftButton")
+eq(QT:StackState().open, true, "click opens the stack")
+local n = #stacked
+local fanR = 130 - 36
+local step = math.deg(34 / fanR)
+for i, def in ipairs(stacked) do
+	local b = QT.buttons[def.key]
+	eq(b:IsShown(), true, def.name .. " fanned out")
+	onRing(b, 170 + (i - (n + 1) / 2) * step, fanR, def.name .. " in its fan slot")
+end
+eq(stackB:IsShown(), true, "the stack dot stays while open")
+local musicB = QT.buttons.music
+local musicBefore = Stub.cvars.Sound_EnableMusic
+musicB.scripts.OnClick(musicB, "LeftButton")
+check(Stub.cvars.Sound_EnableMusic ~= musicBefore, "a fanned dot works as usual")
+eq(musicB:IsShown(), true, "and the fan stays open")
+musicB.scripts.OnClick(musicB, "LeftButton")
+musicB.scripts.OnDragStart(musicB)
+check(musicB.scripts.OnUpdate == nil, "fanned dots can't be dragged out of the fan")
+stackB.scripts.OnClick(stackB, "LeftButton")
+eq(QT:StackState().open, false, "click again folds them back")
+eq(musicB:IsShown(), false, "folded away")
+onRing(musicB, OptionPinsDB.buttons.music.angle, 130, "back at its own ring spot (used when unstacked)")
+
+-- Drag the stack dot around the ring.
+Stub.cursor.x, Stub.cursor.y = 1000, 800
+stackB.scripts.OnDragStart(stackB)
+stackB.scripts.OnUpdate(stackB, 0.016)
+stackB.scripts.OnDragStop(stackB)
+near(OptionPinsDB.stack.angle, 90, "dragging moves the stack dot (90 = top)")
+onRing(stackB, 90, 130, "stack dot at the top")
+Stub.Slash("reset")
+eq(OptionPinsDB.stack.angle, 170, "/pins reset puts the stack dot back")
+stackB.scripts.OnClick(stackB, "RightButton")
+eq(OptionPinsMenu:IsShown(), true, "right-click on the stack dot opens the menu")
+eq(OptionPinsMenu.stack:GetChecked(), true, "menu shows stacking on")
+OptionPinsMenu:Hide()
+
+-- Fewer than two buttons: nothing to stack.
+local keep1 = stacked[1].key
+local turnedOff = {}
+for _, def in ipairs(stacked) do
+	if def.key ~= keep1 then QT:SetEnabled(def.key, false); turnedOff[#turnedOff + 1] = def.key end
+end
+eq(stackB:IsShown(), false, "a single button doesn't get stacked")
+eq(QT.buttons[keep1]:IsShown(), true, "it shows on its own")
+for _, key in ipairs(turnedOff) do QT:SetEnabled(key, true) end
+eq(stackB:IsShown(), true, "stacked again once there are two or more")
+eq(QT.buttons[keep1]:IsShown(), false, "folded away again")
+
+-- Other ways to switch it.
+Stub.Slash("stack")
+eq(OptionPinsDB.stack.enabled, false, "bare /pins stack toggles it off")
+eq(stackB:IsShown(), false, "stack dot gone")
+eq(QT.buttons[keep1]:IsShown(), true, "buttons back on the ring")
+Stub.addonSettings.OptionPins_Stack:SetValue(true)
+eq(stackB:IsShown(), true, "the Options > AddOns switch turns it on")
+QT:OpenMenu(UIParent)
+OptionPinsMenu.stack:SetChecked(false)
+OptionPinsMenu.stack.scripts.OnClick(OptionPinsMenu.stack)
+OptionPinsMenu:Hide()
+eq(OptionPinsDB.stack.enabled, false, "and the menu checkbox turns it off")
+
+-- Lots of buttons: the fan continues on a second arc further in.
+for i = 1, 40 do
+	local key = "fan" .. i
+	QT:Register({ key = key, name = "Fan " .. i, Get = function() return true end, Set = function() end })
+end
+QT:SetStacked(true)
+QT:SetStackOpen(true)
+local inner = 0
+for i = 1, 40 do
+	local p = { QT.buttons["fan" .. i]:GetPoint(1) }
+	local r = math.sqrt(p[4] * p[4] + p[5] * p[5])
+	if r < fanR - 1 then inner = inner + 1 end
+end
+check(inner > 0, "dots that don't fit on the first arc go on a second one")
+for i = 1, 40 do QT:SetEnabled("fan" .. i, false) end
+QT:SetStacked(false)
+
 -- An old hand-made SD/HD button (2.0 and earlier) becomes the Character Models button.
 OptionPinsDB.buttons["PROXY_CHARACTER_MODELS_TOGGLE@bubble"] = nil
 OptionPinsDB.buttons.sdhd = { enabled = true, angle = 123 }
