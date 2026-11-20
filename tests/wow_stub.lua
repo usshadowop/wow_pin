@@ -112,6 +112,7 @@ local function newRegion(kind)
 	function r:GetFrameLevel() return self.level or 1 end
 	function r:GetCenter() return self.cx or 0, self.cy or 0 end
 	function r:GetTop() return self.topY end
+	function r:GetLeft() return self.leftX end
 	function r:GetBottom() return self.bottomY end
 	function r:SetClipsChildren(b) self.clips = b end
 	function r:GetFont() return "Fonts\\FRIZQT__.TTF", 12, "" end

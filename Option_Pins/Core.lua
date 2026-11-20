@@ -56,6 +56,7 @@ local DEFAULTS = {
 	blocks = {},       -- block key  -> { enabled, pos }
 	undo = {},         -- setting (undo key) -> value to undo back to
 	sliderPos = false, -- slider panel { point, relPoint, x, y } relative to UIParent; false = default
+	sliderCollapsed = false, -- slider panel folded down to its header
 }
 
 local db -- OptionPinsDB after ADDON_LOADED
@@ -716,13 +717,15 @@ SlashCmdList["OPTIONPINS"] = function(msg)
 	elseif cmd == "announce" then
 		db.announce = (rest:lower() ~= "off")
 		Print("chat announcement " .. (db.announce and "on" or "off") .. ".")
+	elseif cmd == "collapse" or cmd == "expand" then
+		if QT.SetSlidersCollapsed then QT:SetSlidersCollapsed(cmd == "collapse") end
 	elseif cmd == "blizzard" or cmd == "proxy" then
 		if QT.SetAllowProxy then QT:SetAllowProxy(rest:lower() ~= "off") end
 	elseif cmd == "key" then
 		local t, k = rest:match("^(%S+)%s+(%S+)$")
 		BindKey(t and t:lower(), k)
 	else
-		Print("commands: /pins (menu), /pins options, /pins <toggle> [value], /pins <slider> <value>|undo, enable|disable <name>, list, show, hide, lock, unlock, reset, blizzard on|off, sound on|off, announce on|off, key <toggle> <KEY>")
+		Print("commands: /pins (menu), /pins options, /pins <toggle> [value], /pins <slider> <value>|undo, enable|disable <name>, list, show, hide, collapse, expand, lock, unlock, reset, blizzard on|off, sound on|off, announce on|off, key <toggle> <KEY>")
 	end
 end
 

@@ -71,6 +71,7 @@ minimap button, it becomes the Character Models minimap button at the same spot.
 | Alt-click a minimap or floating button | remove it (the setting is left as it is); add it back from the menu or the Options window |
 | Drag a slider, click along it, or roll the mouse wheel over it | change that setting |
 | Click a slider's undo button | put the setting back where it was before you moved the slider |
+| Click the minus / plus button on the slider panel's header | collapse the panel to just its header ("Sliders (3)"), or expand it to show every slider; remembered across reloads |
 | Drag a button, block or the panel | move it (minimap buttons slide around the ring) |
 | Right-click any control, or `/pins` | the menu: every control you've added, by kind, with a tick to show or hide each; lock; reset positions; allow settings that run Blizzard code; a button to open Options and add more |
 
@@ -90,6 +91,7 @@ Chat commands:
 | `/pins enable <key>`, `/pins disable <key>` | show or hide one control |
 | `/pins list` | every control, its kind, whether it is on, the current value and any undo point |
 | `/pins show`, `/pins hide` | everything at once |
+| `/pins collapse`, `/pins expand` | fold the shared slider panel down to its header, or open it again |
 | `/pins lock`, `/pins unlock`, `/pins reset` | lock, unlock, or put everything back at its default spot |
 | `/pins blizzard on\|off` | allow settings that run Blizzard code (see below) |
 | `/pins sound on\|off`, `/pins announce on\|off` | the click sound and the chat line on each change |

@@ -309,6 +309,49 @@ eq(OptionPinsDB.sliderPos, false, "/pins reset forgets the panel position")
 local pp = { panel:GetPoint(1) }
 eq(pp[2], Minimap, "panel goes back under the minimap")
 
+-- Collapse / expand the shared slider panel.
+local tg = OptionPinsSliderPanelToggle
+check(tg ~= nil and tg.parent == panel, "panel has a collapse / expand button")
+eq(panel.title:GetText(), "Sliders", "header reads Sliders while expanded")
+eq(tg.normal.texture, "Interface\\Buttons\\UI-MinusButton-Up", "minus button while expanded")
+local expandedH = panel.h
+tg.scripts.OnClick(tg, "LeftButton")
+eq(OptionPinsDB.sliderCollapsed, true, "clicking it collapses the panel and saves that")
+eq(bs:IsShown() or cs:IsShown(), false, "slider rows hidden while collapsed")
+eq(panel:IsShown(), true, "the panel itself stays, as just its header")
+eq(panel.title:GetText(), "Sliders (3)", "header shows how many sliders are folded away")
+eq(tg.normal.texture, "Interface\\Buttons\\UI-PlusButton-Up", "plus button while collapsed")
+check(panel.h < expandedH and panel.h <= 24, "panel shrinks to the header")
+tg.scripts.OnEnter(tg)
+check(GameTooltip.lines[1]:find("Expand") and GameTooltip.lines[2]:find("3 sliders"), "tooltip offers to expand all 3")
+tg.scripts.OnLeave(tg)
+SetCVar("Brightness", "60")
+eq(bs:IsShown(), false, "a setting change doesn't pop rows back while collapsed")
+SetCVar("Brightness", "50")
+tg.scripts.OnClick(tg, "LeftButton")
+eq(OptionPinsDB.sliderCollapsed, false, "clicking again expands it")
+eq(bs:IsShown() and cs:IsShown(), true, "rows back")
+eq(bs:GetValue(), 50, "and up to date")
+eq(panel.h, expandedH, "full height again")
+local rowTop = ({ QT.panel.rows.brightness.frame:GetPoint(1) })[5]
+check(rowTop <= -16, "rows start below the header")
+Stub.Slash("collapse")
+eq(OptionPinsDB.sliderCollapsed, true, "/pins collapse")
+Stub.Slash("expand")
+eq(OptionPinsDB.sliderCollapsed, false, "/pins expand")
+tg.scripts.OnClick(tg, "RightButton")
+eq(OptionPinsMenu:IsShown(), true, "right-click on the button opens the menu")
+eq(OptionPinsDB.sliderCollapsed, false, "without collapsing")
+OptionPinsMenu:Hide()
+-- Dragging saves the top-left corner, so collapsing keeps the header in place.
+panel.leftX, panel.topY = 820, 640
+panel.scripts.OnDragStart(panel)
+panel.scripts.OnDragStop(panel)
+local sp = OptionPinsDB.sliderPos
+eq(table.concat({ sp[1], sp[2], sp[3], sp[4] }, ","), "TOPLEFT,BOTTOMLEFT,820,640", "position saved by its top-left corner")
+panel.leftX, panel.topY, panel.moving = nil, nil, nil
+Stub.Slash("reset")
+
 -- Show / hide covers the panel too.
 Stub.Slash("hide")
 eq(panel:IsShown(), false, "/pins hide hides the slider panel")

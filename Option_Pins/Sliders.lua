@@ -16,6 +16,8 @@
 	  so several small adjustments in a row still undo to the original. The undo point is
 	  saved per setting, so a panel row and a block for the same setting share it, and it
 	  survives a /reload.
+	* The shared panel has a header with a collapse / expand button: collapsed, it folds down
+	  to just the header ("Sliders (3)"); expanded, every slider shows. The state is saved.
 	* Right-click anywhere on a panel or block (a label, a slider, an undo button) to open
 	  the Option Pins menu.
 	* Controls follow the game: if the setting is changed in Options they move to match.
@@ -317,7 +319,7 @@ local function CreateHolder(name, onMoved)
 	f:SetScript("OnDragStop", function(self)
 		self:StopMovingOrSizing()
 		local point, _, relPoint, x, y = self:GetPoint(1)
-		if point then onMoved({ point, relPoint, x, y }) end
+		if point then onMoved({ point, relPoint, x, y }, self) end
 	end)
 	f:SetScript("OnMouseUp", function(self, button)
 		if button == "RightButton" then OpenMenuFrom(self) end
@@ -412,10 +414,60 @@ function QT:PlaceSliderPanel()
 	end
 end
 
+local HEADER_H = 16
+
+local function ToggleTooltip(btn)
+	if not GameTooltip then return end
+	GameTooltip:SetOwner(btn, "ANCHOR_RIGHT")
+	GameTooltip:ClearLines()
+	if QT:DB().sliderCollapsed then
+		GameTooltip:AddLine("Expand the slider panel")
+		GameTooltip:AddLine("Show all " .. (panel.count or 0) .. " sliders.", 1, 1, 1)
+	else
+		GameTooltip:AddLine("Collapse the slider panel")
+		GameTooltip:AddLine("Fold it down to this header.", 1, 1, 1)
+	end
+	GameTooltip:AddLine("Right-click for the menu.", 0.5, 0.5, 0.5)
+	GameTooltip:Show()
+end
+
+function QT:SetSlidersCollapsed(collapsed)
+	self:DB().sliderCollapsed = collapsed and true or false
+	self:RefreshSliders()
+	if panel and GameTooltip and GameTooltip:IsOwned(panel.toggle) then ToggleTooltip(panel.toggle) end
+end
+
 local function EnsurePanel()
 	if panel then return panel end
-	panel = CreateHolder("OptionPinsSliderPanel", function(pos) QT:DB().sliderPos = pos end)
+	-- Saved as the top-left corner, so collapsing keeps the header where it is.
+	panel = CreateHolder("OptionPinsSliderPanel", function(pos, f)
+		local left, top = f.GetLeft and f:GetLeft(), f.GetTop and f:GetTop()
+		if left and top then pos = { "TOPLEFT", "BOTTOMLEFT", left, top } end
+		QT:DB().sliderPos = pos
+	end)
 	panel.rows = {}
+
+	panel.title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+	panel.title:SetTextColor(QT.YELLOW[1], QT.YELLOW[2], QT.YELLOW[3])
+	panel.title:SetPoint("TOPLEFT", panel, "TOPLEFT", PAD, -4)
+	panel.title:SetText("Sliders")
+
+	local t = CreateFrame("Button", "OptionPinsSliderPanelToggle", panel)
+	t:SetSize(14, 14)
+	t:SetPoint("TOPRIGHT", panel, "TOPRIGHT", -PAD + 2, -2)
+	t:RegisterForClicks("LeftButtonUp", "RightButtonUp")
+	t:SetHighlightTexture("Interface\\Buttons\\UI-PlusButton-Hilight", "ADD")
+	t:SetScript("OnClick", function(self, button)
+		if button == "RightButton" then
+			OpenMenuFrom(panel)
+		else
+			QT:SetSlidersCollapsed(not QT:DB().sliderCollapsed)
+		end
+	end)
+	t:SetScript("OnEnter", ToggleTooltip)
+	t:SetScript("OnLeave", HideTooltip)
+	panel.toggle = t
+
 	QT.panel = panel
 	QT:PlaceSliderPanel()
 	return panel
@@ -425,21 +477,33 @@ end
 function QT:RefreshSliders()
 	if not panel then return end
 	local db = self:DB()
+	local collapsed = db.sliderCollapsed
 	local n = 0
 	for _, def in ipairs(self.sliders) do
 		local row = panel.rows[def.key]
 		if row then
-			local show = db.shown and self:IsEnabled(def.key) and self:Available(def)
-			if show then
+			local enabled = db.shown and self:IsEnabled(def.key) and self:Available(def)
+			if enabled then
 				row.frame:ClearAllPoints()
-				row.frame:SetPoint("TOPLEFT", panel, "TOPLEFT", PAD, -PAD - n * ROW_H)
-				UpdateRow(row)
+				row.frame:SetPoint("TOPLEFT", panel, "TOPLEFT", PAD, -HEADER_H - n * ROW_H)
+				if not collapsed then UpdateRow(row) end
 				n = n + 1
 			end
-			SetRowShown(row, show)
+			SetRowShown(row, enabled and not collapsed)
 		end
 	end
-	panel:SetHeight(n * ROW_H + 2 * PAD - 4)
+	panel.count = n
+	if collapsed then
+		panel.title:SetText("Sliders (" .. n .. ")")
+		panel.toggle:SetNormalTexture("Interface\\Buttons\\UI-PlusButton-Up")
+		panel.toggle:SetPushedTexture("Interface\\Buttons\\UI-PlusButton-Down")
+		panel:SetHeight(HEADER_H + 4)
+	else
+		panel.title:SetText("Sliders")
+		panel.toggle:SetNormalTexture("Interface\\Buttons\\UI-MinusButton-Up")
+		panel.toggle:SetPushedTexture("Interface\\Buttons\\UI-MinusButton-Down")
+		panel:SetHeight(HEADER_H + n * ROW_H + PAD - 2)
+	end
 	if n > 0 then panel:Show() else panel:Hide() end
 end
 
