@@ -1,4 +1,4 @@
-# Quick Toggle (World of Warcraft: Forever)
+# Option Pins (World of Warcraft: Forever)
 
 Turn any setting in the game's Options window into a one-click control on your screen.
 
@@ -23,7 +23,7 @@ Rows that combine a checkbox with a slider or dropdown get a second pair of boxe
 row's right edge for the slider or dropdown part. Hover any box to see what it does.
 
 So it's clear these boxes come from an add-on, each section's boxes hang off a yellow bracket:
-**Quick Toggle** in the game's small label font, underlined, with a bar running down from the
+**Option Pins** in the game's small label font, underlined, with a bar running down from the
 underline to the bottom of the section and a short branch out to each row's boxes. Rows
 without boxes are passed by. There's no box around it: no top, right or bottom edge. The
 bracket follows the list as you scroll, and the right-edge pairs on combined rows get a short
@@ -46,16 +46,18 @@ commit for 1.60.1.70862, Nov 7 2026).
 
 ## Install
 
-1. Copy the `Option_Pin` folder into
-   `World of Warcraft\_forever_\Interface\AddOns\Option_Pin`
-   (the folder must be named `Option_Pin`, the same as the `.toc` file). From the GitHub zip
-   (`wow_pin-main.zip`), copy only the `Option_Pin` folder inside it.
+1. Copy the `Option_Pins` folder into
+   `World of Warcraft\_forever_\Interface\AddOns\Option_Pins`
+   (the folder must be named `Option_Pins`, the same as the `.toc` file). From the GitHub zip
+   (`wow_pin-main.zip`), copy only the `Option_Pins` folder inside it.
 2. Restart the game or `/reload`.
 
-If you used an earlier version from the `QuickToggle` folder, delete that folder. The game
-keeps add-on settings per folder name, so to keep your buttons, sliders and undo points, close
-the game and rename `WTF\Account\<account>\SavedVariables\QuickToggle.lua` to
-`Option_Pin.lua` before starting it again. Otherwise everything starts fresh. If you had the old SD/HD
+Option Pins used to be called Quick Toggle. If you have the old `QuickToggle` (or `Option_Pin`)
+folder, delete it. The game keeps add-on settings per folder name, so to keep your buttons,
+sliders and undo points, close the game and rename
+`WTF\Account\<account>\SavedVariables\QuickToggle.lua` (or `Option_Pin.lua`) to
+`Option_Pins.lua` before starting it again; Option Pins reads the old settings from it.
+Otherwise everything starts fresh. Key bindings from the old version need setting again. If you had the old SD/HD
 minimap button, it becomes the Character Models minimap button at the same spot.
 
 ## Use
@@ -70,47 +72,47 @@ minimap button, it becomes the Character Models minimap button at the same spot.
 | Drag a slider, click along it, or roll the mouse wheel over it | change that setting |
 | Click a slider's undo button | put the setting back where it was before you moved the slider |
 | Drag a button, block or the panel | move it (minimap buttons slide around the ring) |
-| Right-click any control, or `/qt` | the menu: every control you've added, by kind, with a tick to show or hide each; lock; reset positions; allow settings that run Blizzard code; a button to open Options and add more |
+| Right-click any control, or `/pins` | the menu: every control you've added, by kind, with a tick to show or hide each; lock; reset positions; allow settings that run Blizzard code; a button to open Options and add more |
 
-Options > AddOns > Quick Toggle has the same main switches: show everything, lock, and allow
+Options > AddOns > Option Pins has the same main switches: show everything, lock, and allow
 settings that run Blizzard code.
 
 Chat commands:
 
 | Command | What it does |
 |---|---|
-| `/qt` | open the menu |
-| `/qt options` | open the Options window at Quick Toggle's page |
-| `/qt music`, `/qt <key>` | flip a button's setting from chat; `/qt list` shows every key |
-| `/qt music on\|off` | set it to a specific value |
-| `/qt brightness 60`, `/qt gamma 1.2`, `/qt <slider key> <value>` | set a slider (undoable) |
-| `/qt brightness undo`, `/qt <slider key> undo` | undo |
-| `/qt enable <key>`, `/qt disable <key>` | show or hide one control |
-| `/qt list` | every control, its kind, whether it is on, the current value and any undo point |
-| `/qt show`, `/qt hide` | everything at once |
-| `/qt lock`, `/qt unlock`, `/qt reset` | lock, unlock, or put everything back at its default spot |
-| `/qt blizzard on\|off` | allow settings that run Blizzard code (see below) |
-| `/qt sound on\|off`, `/qt announce on\|off` | the click sound and the chat line on each change |
-| `/qt key <toggle> <KEY>` | bind a key, e.g. `/qt key music F11` |
+| `/pins` | open the menu |
+| `/pins options` | open the Options window at Option Pins's page |
+| `/pins music`, `/pins <key>` | flip a button's setting from chat; `/pins list` shows every key |
+| `/pins music on\|off` | set it to a specific value |
+| `/pins brightness 60`, `/pins gamma 1.2`, `/pins <slider key> <value>` | set a slider (undoable) |
+| `/pins brightness undo`, `/pins <slider key> undo` | undo |
+| `/pins enable <key>`, `/pins disable <key>` | show or hide one control |
+| `/pins list` | every control, its kind, whether it is on, the current value and any undo point |
+| `/pins show`, `/pins hide` | everything at once |
+| `/pins lock`, `/pins unlock`, `/pins reset` | lock, unlock, or put everything back at its default spot |
+| `/pins blizzard on\|off` | allow settings that run Blizzard code (see below) |
+| `/pins sound on\|off`, `/pins announce on\|off` | the click sound and the chat line on each change |
+| `/pins key <toggle> <KEY>` | bind a key, e.g. `/pins key music F11` |
 
 Keys for controls added from Options are the setting's name in the game plus the kind, for
 example `autoLootDefault@float` or `maxFPS@block`. Case doesn't matter.
 
 ## Which settings work, and why some are greyed out
 
-About 300 settings in Forever's Options window are quick-toggle candidates:
+About 300 settings in Forever's Options window are candidates for a pin:
 
-- **About two thirds are console variables** (CVars). Quick Toggle changes them with `SetCVar`,
+- **About two thirds are console variables** (CVars). Option Pins changes them with `SetCVar`,
   the exact call Blizzard's own Options code makes for them (`CVarSettingMixin` in
   `Blizzard_Setting.lua`), so the result is identical. These work out of the box.
 - **About a third are "proxy" settings** that apply by running Blizzard functions: graphics
   quality presets, action bars, nameplates, voice chat and others. When an addon runs that code,
   the game can later refuse protected actions with "Interface action blocked by an AddOn",
   usually in combat. So their boxes are greyed out until you tick **Allow settings that run
-  Blizzard code** (right-click menu, Options > AddOns > Quick Toggle, or `/qt blizzard on`).
+  Blizzard code** (right-click menu, Options > AddOns > Option Pins, or `/pins blizzard on`).
   Even then they are never changed in combat; the control says so and does nothing.
 - **Character Models is the exception**: it is a proxy setting, but its Blizzard setter only
-  calls `C_GameRules.SetSDHDToggleValue`, so Quick Toggle makes that call itself (the same one
+  calls `C_GameRules.SetSDHDToggleValue`, so Option Pins makes that call itself (the same one
   the Barbershop checkbox makes) and it works without the switch.
 - **Settings that only apply after a restart** (display mode, resolution, anything Blizzard
   marks `ClientRestart`, `GxRestart`, `UIReload` or `UpdateWindow`) have greyed boxes. A quick
@@ -126,27 +128,27 @@ and snaps back to the real value.
 Blizzard's UI add-on policy allows addons that add their own frames to Blizzard's interface
 through the normal Lua API, which is all this does. The technical risk with touching Blizzard's
 Options window is "taint": if addon code writes to Blizzard's own tables, Blizzard code that
-later reads them can be blocked. Quick Toggle avoids that:
+later reads them can be blocked. Option Pins avoids that:
 
-- Every Options row runs `SettingsListElementMixin.Init`. Quick Toggle attaches with
+- Every Options row runs `SettingsListElementMixin.Init`. Option Pins attaches with
   `hooksecurefunc`, Blizzard's approved way to run code after one of its functions without
   tainting it.
-- The boxes are Quick Toggle's own child frames. Nothing is stored on Blizzard's row frames or
-  setting objects; the row-to-boxes map lives in Quick Toggle's own weak table.
+- The boxes are Option Pins's own child frames. Nothing is stored on Blizzard's row frames or
+  setting objects; the row-to-boxes map lives in Option Pins's own weak table.
 - Setting objects are only read (name, type, current value, slider range, dropdown choices).
   CVar settings are written with `SetCVar`, not through Blizzard's setting object.
 - The boxes sit above the row's invisible hover area so a click on a box never also clicks
   Blizzard's checkbox.
-- The section brackets live on Quick Toggle's own overlay frames on top of the list. They read
+- The section brackets live on Option Pins's own overlay frames on top of the list. They read
   the list's visible rows and the current page's layout to know where sections start and end,
   and change nothing of Blizzard's.
 
 ## Adding a hand-made toggle
 
-For a control with custom art, write a small file in `Option_Pin/Toggles/` (minimap button,
-`QuickToggle:Register{...}`) or `Option_Pin/Sliders/` (panel row, `QuickToggle:RegisterSlider{...}`),
+For a control with custom art, write a small file in `Option_Pins/Toggles/` (minimap button,
+`OptionPins:Register{...}`) or `Option_Pins/Sliders/` (panel row, `OptionPins:RegisterSlider{...}`),
 and list it in the `.toc`. `Toggles/Music.lua` and `Sliders/Display.lua` are the smallest
-examples. `QuickToggle:RegisterFloat{...}` and `QuickToggle:RegisterBlock{...}` make floating
+examples. `OptionPins:RegisterFloat{...}` and `OptionPins:RegisterBlock{...}` make floating
 ones. To make a hand-made control the one an Options row's box drives, add its setting to the
 `FEATURED` table at the top of `Options.lua`.
 

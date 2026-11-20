@@ -9,7 +9,7 @@
 	    "Gamma"       0.3 - 2.8 in steps of 0.1, shown to one decimal (RoundToOneTenth), default 1.0
 ]]
 
-local QT = QuickToggle
+local QT = OptionPins
 
 QT:RegisterSlider({
 	key = "brightness",

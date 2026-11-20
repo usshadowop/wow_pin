@@ -8,9 +8,9 @@
 	The button always shows a yellow musical note; a red X is laid over it while music is off.
 ]]
 
-local QT = QuickToggle
+local QT = OptionPins
 
-BINDING_NAME_QUICKTOGGLE_MUSIC = "Quick Toggle: music on / off"
+BINDING_NAME_OPTIONPINS_MUSIC = "Option Pins: music on / off"
 
 local CVAR = "Sound_EnableMusic"
 

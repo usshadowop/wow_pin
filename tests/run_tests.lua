@@ -1,6 +1,6 @@
 local here, addonDir = ...
 here = here or "tests"
-addonDir = addonDir or "Option_Pin"
+addonDir = addonDir or "Option_Pins"
 
 local Stub = dofile(here .. "/wow_stub.lua")
 
@@ -18,20 +18,20 @@ local function onRing(btn, angleDeg, radius, msg)
 		and math.abs(p[5] - radius * math.sin(math.rad(angleDeg))) < 0.01, msg)
 end
 
-Stub.LoadAddon(addonDir, "Option_Pin")
-local QT = QuickToggle
-local mu = QuickToggle_music_Button
+Stub.LoadAddon(addonDir, "Option_Pins")
+local QT = OptionPins
+local mu = OptionPins_music_Button
 
 -- Load: the hand-made music button on the minimap ring. The old hand-made SD/HD button is
 -- gone: the Options window's Character Models setting covers it (see the Options section).
 eq(#QT.toggles, 1, "one hand-made minimap button registered")
 eq(QT.toggles[1].key, "music", "it is Music")
 eq(QT.all.sdhd, nil, "no hand-made SD/HD button any more")
-eq(_G.QuickToggle_sdhd_Button, nil, "and no frame for it")
+eq(_G.OptionPins_sdhd_Button, nil, "and no frame for it")
 eq(mu:IsShown(), true, "Music button shown on login")
 eq(mu.parent, Minimap, "buttons are children of the Minimap")
 check(mu.ring.texture:find("TrackingBorder") ~= nil, "buttons have the standard minimap ring")
-eq(QuickToggleDB.buttons.music.enabled, true, "Music saved as enabled by default")
+eq(OptionPinsDB.buttons.music.enabled, true, "Music saved as enabled by default")
 onRing(mu, 200, 75, "Music sits at 200 degrees, half the minimap width + 5 out")
 Minimap:SetSize(250, 250)
 onRing(mu, 200, 130, "a bigger minimap pushes Music out to its edge")
@@ -77,42 +77,42 @@ mu.scripts.OnLeave(mu)
 
 -- Slash commands.
 Stub.Slash("music off")
-eq(Stub.cvars.Sound_EnableMusic, "0", "/qt music off")
+eq(Stub.cvars.Sound_EnableMusic, "0", "/pins music off")
 Stub.Slash("music off")
-check(Stub.LastPrint():find("already") ~= nil, "/qt music off twice says already")
+check(Stub.LastPrint():find("already") ~= nil, "/pins music off twice says already")
 Stub.Slash("music")
-eq(Stub.cvars.Sound_EnableMusic, "1", "bare /qt music flips")
+eq(Stub.cvars.Sound_EnableMusic, "1", "bare /pins music flips")
 Stub.Slash("music purple")
 check(Stub.LastPrint():find("don't know") ~= nil, "unknown value is reported")
 Stub.Slash("sdhd")
-check(Stub.LastPrint():find("commands:") ~= nil, "/qt sdhd is gone")
+check(Stub.LastPrint():find("commands:") ~= nil, "/pins sdhd is gone")
 Stub.Slash("bogus")
 check(Stub.LastPrint():find("commands:") ~= nil, "unknown command prints help")
 
 Stub.Slash("disable music")
-eq(mu:IsShown(), false, "/qt disable music hides the button")
-eq(QuickToggleDB.buttons.music.enabled, false, "and saves it")
+eq(mu:IsShown(), false, "/pins disable music hides the button")
+eq(OptionPinsDB.buttons.music.enabled, false, "and saves it")
 Stub.Slash("enable music")
-eq(mu:IsShown(), true, "/qt enable music shows it again")
+eq(mu:IsShown(), true, "/pins enable music shows it again")
 Stub.Slash("disable nothing")
 check(Stub.LastPrint():find("no toggle") ~= nil, "disable of unknown toggle is reported")
 
 Stub.Slash("hide")
-eq(mu:IsShown(), false, "/qt hide hides every button")
+eq(mu:IsShown(), false, "/pins hide hides every button")
 Stub.Slash("show")
-eq(mu:IsShown(), true, "/qt show brings them back")
+eq(mu:IsShown(), true, "/pins show brings them back")
 
 local n = #Stub.printed
 Stub.Slash("list")
-eq(#Stub.printed - n, 4, "/qt list prints one line per button and slider")
+eq(#Stub.printed - n, 4, "/pins list prints one line per button and slider")
 check(Stub.printed[n + 1]:find("Music") ~= nil and Stub.printed[n + 1]:find("music on") ~= nil, "list shows the music state")
 
 -- Key bindings.
-QuickToggle_Press("music")
+OptionPins_Press("music")
 eq(Stub.cvars.Sound_EnableMusic, "0", "binding flips music")
-QuickToggle_Press("music")
+OptionPins_Press("music")
 Stub.Slash("key music F11")
-eq(Stub.bindings["F11"], "QUICKTOGGLE_MUSIC", "/qt key binds the toggle's action")
+eq(Stub.bindings["F11"], "OPTIONPINS_MUSIC", "/pins key binds the toggle's action")
 eq(Stub.savedBindings, true, "bindings are saved")
 Stub.Slash("key sdhd F12")
 check(Stub.LastPrint():find("usage") ~= nil, "the old SD/HD binding is gone")
@@ -124,7 +124,7 @@ Stub.cursor.x, Stub.cursor.y = 1000, 800
 mu.scripts.OnDragStart(mu)
 mu.scripts.OnUpdate(mu, 0.016)
 mu.scripts.OnDragStop(mu)
-near(QuickToggleDB.buttons.music.angle, 90, "music drag sets its angle from the cursor (90 = top)")
+near(OptionPinsDB.buttons.music.angle, 90, "music drag sets its angle from the cursor (90 = top)")
 onRing(mu, 90, 130, "music now sits at the top of the ring")
 check(mu.scripts.OnUpdate == nil, "drag stop removes the OnUpdate")
 Stub.Slash("lock")
@@ -132,12 +132,12 @@ mu.scripts.OnDragStart(mu)
 check(mu.scripts.OnUpdate == nil, "locked buttons do not drag")
 Stub.Slash("unlock")
 Stub.Slash("reset")
-eq(QuickToggleDB.buttons.music.angle, 200, "/qt reset puts music back at its default angle")
+eq(OptionPinsDB.buttons.music.angle, 200, "/pins reset puts music back at its default angle")
 
 -- The menu (no MenuUtil in the stub, so the fallback frame is exercised).
 eq(MenuUtil, nil, "stub has no MenuUtil, fallback menu in use")
 mu.scripts.OnClick(mu, "RightButton")
-local menu = QuickToggleMenu
+local menu = OptionPinsMenu
 check(menu and menu:IsShown(), "right-click opens the menu")
 eq(#menu.rows, 4, "one menu row per button and slider")
 eq(menu.rows[1].label:GetText(), "Music", "row 1 is Music")
@@ -145,24 +145,24 @@ eq(menu.rows[1]:GetChecked(), true, "music row ticked while enabled")
 menu.rows[1]:SetChecked(false)
 menu.rows[1].scripts.OnClick(menu.rows[1])
 eq(mu:IsShown(), false, "unticking Music in the menu hides its button")
-eq(QuickToggleDB.buttons.music.enabled, false, "and saves it")
+eq(OptionPinsDB.buttons.music.enabled, false, "and saves it")
 menu.rows[1]:SetChecked(true)
 menu.rows[1].scripts.OnClick(menu.rows[1])
 eq(mu:IsShown(), true, "ticking it again shows the button")
 menu.lock:SetChecked(true)
 menu.lock.scripts.OnClick(menu.lock)
-eq(QuickToggleDB.locked, true, "menu lock row locks the buttons")
+eq(OptionPinsDB.locked, true, "menu lock row locks the buttons")
 menu.lock:SetChecked(false)
 menu.lock.scripts.OnClick(menu.lock)
-QuickToggleDB.buttons.music.angle = 10
+OptionPinsDB.buttons.music.angle = 10
 menu.reset.scripts.OnClick(menu.reset)
-eq(QuickToggleDB.buttons.music.angle, 200, "menu reset button resets positions")
+eq(OptionPinsDB.buttons.music.angle, 200, "menu reset button resets positions")
 menu.close.scripts.OnClick(menu.close)
 eq(menu:IsShown(), false, "close button hides the menu")
 Stub.Slash("")
-eq(menu:IsShown(), true, "bare /qt opens the menu")
+eq(menu:IsShown(), true, "bare /pins opens the menu")
 menu:Hide()
-QuickToggle_Press("menu")
+OptionPins_Press("menu")
 eq(menu:IsShown(), true, "menu key binding opens the menu")
 menu:Hide()
 
@@ -173,11 +173,11 @@ check(Stub.LastPrint():find("no toggle called") ~= nil, "and says so")
 -------------------------------------------------------------------------------
 -- Sliders: brightness and contrast
 -------------------------------------------------------------------------------
-local panel = QuickToggleSliderPanel
-local bs = QuickToggle_brightness_Slider
-local bu = QuickToggle_brightness_Undo
-local cs = QuickToggle_contrast_Slider
-local cu = QuickToggle_contrast_Undo
+local panel = OptionPinsSliderPanel
+local bs = OptionPins_brightness_Slider
+local bu = OptionPins_brightness_Undo
+local cs = OptionPins_contrast_Slider
+local cu = OptionPins_contrast_Undo
 local brow = QT.panel.rows.brightness
 
 eq(#QT.sliders, 3, "three sliders registered")
@@ -190,30 +190,30 @@ eq(brow.value:GetText(), "50%", "value shown as a percentage")
 eq(brow.label:GetText(), "Brightness", "row labelled")
 eq(bu:IsEnabled(), false, "undo disabled before anything moved")
 check(bu.icon.alpha < 1, "undo icon dimmed while there is nothing to undo")
-eq(QuickToggleDB.sliders.brightness.enabled, true, "brightness saved as enabled by default")
+eq(OptionPinsDB.sliders.brightness.enabled, true, "brightness saved as enabled by default")
 
 -- Several moves in a row still undo to the original value.
 bs:SetValue(70)
 eq(Stub.cvars.Brightness, "70", "dragging the slider sets the Brightness cvar")
-eq(QuickToggleDB.undo.Brightness, 50, "undo point is the value before the first move")
+eq(OptionPinsDB.undo.Brightness, 50, "undo point is the value before the first move")
 eq(bu:IsEnabled(), true, "undo enabled after a move")
 eq(bu.icon.alpha, 1, "undo icon lit")
 eq(brow.value:GetText(), "70%", "value text follows")
 bs:SetValue(80)
 bs.scripts.OnMouseWheel(bs, 1)
 eq(Stub.cvars.Brightness, "81", "mouse wheel steps by one")
-eq(QuickToggleDB.undo.Brightness, 50, "later moves keep the first undo point")
+eq(OptionPinsDB.undo.Brightness, 50, "later moves keep the first undo point")
 bu.scripts.OnClick(bu, "LeftButton")
 eq(Stub.cvars.Brightness, "50", "undo puts brightness back where it was")
 eq(bs:GetValue(), 50, "slider moves back too")
-eq(QuickToggleDB.undo.Brightness, nil, "undo point cleared")
+eq(OptionPinsDB.undo.Brightness, nil, "undo point cleared")
 eq(bu:IsEnabled(), false, "undo disabled again")
 check(Stub.LastPrint():find("back to 50%%") ~= nil, "announces the undo")
 
 -- Sliding back onto the undo point by hand clears it.
 bs:SetValue(60)
 bs:SetValue(50)
-eq(QuickToggleDB.undo.Brightness, nil, "sliding back to the start leaves nothing to undo")
+eq(OptionPinsDB.undo.Brightness, nil, "sliding back to the start leaves nothing to undo")
 
 -- Fractional input snaps to the step; values clamp to the range.
 bs.scripts.OnValueChanged(bs, 42.6)
@@ -223,26 +223,26 @@ bs:SetValue(50)
 -- Contrast is independent.
 cs:SetValue(30)
 eq(Stub.cvars.Contrast, "30", "contrast slider sets the Contrast cvar")
-eq(QuickToggleDB.undo.Contrast, 50, "contrast has its own undo point")
-eq(QuickToggleDB.undo.Brightness, nil, "brightness undo untouched")
+eq(OptionPinsDB.undo.Contrast, 50, "contrast has its own undo point")
+eq(OptionPinsDB.undo.Brightness, nil, "brightness undo untouched")
 
 -- Changed in Options: the slider follows at once (CVAR_UPDATE), the undo point stays.
 SetCVar("Contrast", "65")
 eq(cs:GetValue(), 65, "external change moves the slider")
 eq(Stub.cvars.Contrast, "65", "and syncing the slider does not write the cvar back")
-eq(QuickToggleDB.undo.Contrast, 50, "external change keeps the undo point")
+eq(OptionPinsDB.undo.Contrast, 50, "external change keeps the undo point")
 cu.scripts.OnClick(cu, "LeftButton")
 eq(Stub.cvars.Contrast, "50", "contrast undo")
 
 -- Undo point survives a reload (it lives in saved variables).
 cs:SetValue(20)
-eq(QuickToggleDB.undo.Contrast, 50, "undo point saved")
+eq(OptionPinsDB.undo.Contrast, 50, "undo point saved")
 SetCVar("Contrast", "50")
-QuickToggleDB.undo.Contrast = nil
+OptionPinsDB.undo.Contrast = nil
 QT:RefreshSliders()
 
 -- Right-click anywhere on the slider panel opens the menu.
-local menu = QuickToggleMenu
+local menu = OptionPinsMenu
 menu:Hide()
 bs.scripts.OnMouseUp(bs, "RightButton")
 eq(menu:IsShown(), true, "right-click on a slider opens the menu")
@@ -298,45 +298,45 @@ panel.scripts.OnDragStart(panel)
 eq(panel.moving, true, "panel drags when unlocked")
 panel:ClearAllPoints(); panel:SetPoint("CENTER", UIParent, "CENTER", 100, 50)
 panel.scripts.OnDragStop(panel)
-check(QuickToggleDB.sliderPos and QuickToggleDB.sliderPos[3] == 100, "drag stop saves the panel position")
+check(OptionPinsDB.sliderPos and OptionPinsDB.sliderPos[3] == 100, "drag stop saves the panel position")
 panel.moving = nil
 Stub.Slash("lock")
 panel.scripts.OnDragStart(panel)
 eq(panel.moving, nil, "locked panel does not drag")
 Stub.Slash("unlock")
 Stub.Slash("reset")
-eq(QuickToggleDB.sliderPos, false, "/qt reset forgets the panel position")
+eq(OptionPinsDB.sliderPos, false, "/pins reset forgets the panel position")
 local pp = { panel:GetPoint(1) }
 eq(pp[2], Minimap, "panel goes back under the minimap")
 
 -- Show / hide covers the panel too.
 Stub.Slash("hide")
-eq(panel:IsShown(), false, "/qt hide hides the slider panel")
+eq(panel:IsShown(), false, "/pins hide hides the slider panel")
 Stub.Slash("show")
-eq(panel:IsShown(), true, "/qt show brings it back")
+eq(panel:IsShown(), true, "/pins show brings it back")
 
 -- Slash commands.
 Stub.Slash("brightness 65")
-eq(Stub.cvars.Brightness, "65", "/qt brightness 65")
-eq(QuickToggleDB.undo.Brightness, 50, "chat changes also keep an undo point")
+eq(Stub.cvars.Brightness, "65", "/pins brightness 65")
+eq(OptionPinsDB.undo.Brightness, 50, "chat changes also keep an undo point")
 eq(bs:GetValue(), 65, "slider follows a chat change")
 Stub.Slash("brightness")
-check(Stub.LastPrint():find("65%%") and Stub.LastPrint():find("undo goes back to 50%%"), "bare /qt brightness reports value and undo point")
+check(Stub.LastPrint():find("65%%") and Stub.LastPrint():find("undo goes back to 50%%"), "bare /pins brightness reports value and undo point")
 Stub.Slash("brightness undo")
-eq(Stub.cvars.Brightness, "50", "/qt brightness undo")
+eq(Stub.cvars.Brightness, "50", "/pins brightness undo")
 Stub.Slash("brightness undo")
 check(Stub.LastPrint():find("nothing to undo") ~= nil, "second undo says nothing to undo")
 Stub.Slash("contrast 140")
 check(Stub.LastPrint():find("usage") ~= nil, "out-of-range value prints usage")
 eq(Stub.cvars.Contrast, "50", "and changes nothing")
 Stub.Slash("disable contrast")
-eq(cs:IsShown(), false, "/qt disable contrast hides its row")
+eq(cs:IsShown(), false, "/pins disable contrast hides its row")
 check(Stub.LastPrint():find("Contrast slider off") ~= nil, "names it as a slider")
 Stub.Slash("enable contrast")
-eq(cs:IsShown(), true, "/qt enable contrast shows it")
+eq(cs:IsShown(), true, "/pins enable contrast shows it")
 local n0 = #Stub.printed
 Stub.Slash("list")
-eq(#Stub.printed - n0, 4, "/qt list covers 1 button and 3 sliders")
+eq(#Stub.printed - n0, 4, "/pins list covers 1 button and 3 sliders")
 check(Stub.printed[n0 + 2]:find("Brightness") and Stub.printed[n0 + 2]:find("now: 50%%"), "list shows the brightness value")
 
 -- Tooltips.
@@ -355,7 +355,7 @@ Stub.lockedCVars.Contrast = true
 cs:SetValue(80)
 eq(Stub.cvars.Contrast, "50", "refused write leaves the cvar alone")
 eq(cs:GetValue(), 50, "slider snaps back to the real value")
-eq(QuickToggleDB.undo.Contrast, nil, "no undo point for a refused change")
+eq(OptionPinsDB.undo.Contrast, nil, "no undo point for a refused change")
 check(Stub.LastPrint():find("did not accept") ~= nil, "warns once")
 local n1 = #Stub.printed
 cs:SetValue(81)
@@ -375,8 +375,8 @@ QT:RefreshSliders()
 eq(bs:IsShown(), true, "row back when the cvar exists")
 
 -- Gamma: a plain number in 0.1 steps from 0.3 to 2.8.
-local gs = QuickToggle_gamma_Slider
-local gu = QuickToggle_gamma_Undo
+local gs = OptionPins_gamma_Slider
+local gu = OptionPins_gamma_Undo
 local grow = QT.panel.rows.gamma
 eq(gs:IsShown(), true, "gamma row shown")
 eq(grow.label:GetText(), "Gamma", "gamma row labelled")
@@ -389,7 +389,7 @@ check(gp[5] < cp[5], "gamma row sits below contrast")
 gs:SetValue(1.2)
 eq(Stub.cvars.Gamma, "1.2", "gamma written without float noise")
 eq(grow.value:GetText(), "1.2", "value text 1.2")
-eq(QuickToggleDB.undo.Gamma, 1, "gamma undo point is 1.0")
+eq(OptionPinsDB.undo.Gamma, 1, "gamma undo point is 1.0")
 gs.scripts.OnMouseWheel(gs, 1)
 eq(Stub.cvars.Gamma, "1.3", "mouse wheel steps gamma by 0.1")
 gs.scripts.OnMouseWheel(gs, -1)
@@ -403,18 +403,18 @@ gs:SetValue(0)
 eq(Stub.cvars.Gamma, "0.3", "clamped to the 0.3 minimum")
 gu.scripts.OnClick(gu, "LeftButton")
 eq(tonumber(Stub.cvars.Gamma), 1, "gamma undo back to 1.0")
-eq(QuickToggleDB.undo.Gamma, nil, "gamma undo point cleared")
+eq(OptionPinsDB.undo.Gamma, nil, "gamma undo point cleared")
 gs:SetValue(1.4)
 gs:SetValue(1.0)
-eq(QuickToggleDB.undo.Gamma, nil, "sliding gamma back to 1.0 leaves nothing to undo")
+eq(OptionPinsDB.undo.Gamma, nil, "sliding gamma back to 1.0 leaves nothing to undo")
 SetCVar("Gamma", "0.8")
 eq(gs:GetValue(), 0.8, "gamma follows a change made in Options")
 eq(grow.value:GetText(), "0.8", "and shows it")
 SetCVar("Gamma", "1.0")
 Stub.Slash("gamma 1.5")
-eq(Stub.cvars.Gamma, "1.5", "/qt gamma 1.5")
+eq(Stub.cvars.Gamma, "1.5", "/pins gamma 1.5")
 Stub.Slash("gamma undo")
-eq(tonumber(Stub.cvars.Gamma), 1, "/qt gamma undo")
+eq(tonumber(Stub.cvars.Gamma), 1, "/pins gamma undo")
 Stub.Slash("gamma 3")
 check(Stub.LastPrint():find("<0.3%-2.8>") ~= nil, "gamma usage shows the real 0.3-2.8 range")
 Stub.Slash("contrast 140")
@@ -426,12 +426,12 @@ QT:OpenMenu(panel)
 eq(menu.rows[4].label:GetText(), "Gamma", "menu row 4 is gamma")
 menu:Hide()
 Stub.Slash("disable gamma")
-eq(gs:IsShown(), false, "/qt disable gamma hides its row")
+eq(gs:IsShown(), false, "/pins disable gamma hides its row")
 Stub.Slash("enable gamma")
-eq(gs:IsShown(), true, "/qt enable gamma shows it")
+eq(gs:IsShown(), true, "/pins enable gamma shows it")
 
 -- Fresh saved variables from 1.0.x gain the slider tables.
-check(type(QuickToggleDB.sliders) == "table" and QuickToggleDB.sliderPos ~= nil, "slider settings present in saved variables")
+check(type(OptionPinsDB.sliders) == "table" and OptionPinsDB.sliderPos ~= nil, "slider settings present in saved variables")
 
 -------------------------------------------------------------------------------
 -- Options window integration
@@ -493,11 +493,11 @@ Stub.categories = {
 }
 
 -- The add-on page under Options > AddOns.
-eq(#Stub.addonCategories, 1, "Quick Toggle page registered under Options > AddOns")
-eq(Stub.addonCategories[1]:GetName(), "Quick Toggle", "page is named Quick Toggle")
-check(Stub.addonSettings.QuickToggle_AllowProxy ~= nil, "page has the 'allow Blizzard code' switch")
-check(Stub.addonSettings.QuickToggle_Locked and Stub.addonSettings.QuickToggle_Shown, "page has lock and show switches")
-eq(Stub.addonSettings.QuickToggle_SDHD, nil, "the old SD/HD switch is gone from the page")
+eq(#Stub.addonCategories, 1, "Option Pins page registered under Options > AddOns")
+eq(Stub.addonCategories[1]:GetName(), "Option Pins", "page is named Option Pins")
+check(Stub.addonSettings.OptionPins_AllowProxy ~= nil, "page has the 'allow Blizzard code' switch")
+check(Stub.addonSettings.OptionPins_Locked and Stub.addonSettings.OptionPins_Shown, "page has lock and show switches")
+eq(Stub.addonSettings.OptionPins_SDHD, nil, "the old SD/HD switch is gone from the page")
 
 Stub.Fire("SETTINGS_LOADED")
 local infos = QT.optionInfos
@@ -513,7 +513,7 @@ eq(infos.Gamma.step, 0.1, "gamma step 0.1 from 25 steps over 0.3-2.8")
 eq(infos.PROXY_TEXTURE and infos.PROXY_TEXTURE.category, "Advanced", "subcategories are scanned")
 eq(infos.Keybindings, nil, "button rows are not settings")
 
--- Finds the boxes Quick Toggle put on a Blizzard row (our CheckButtons parented to it).
+-- Finds the boxes Option Pins put on a Blizzard row (our CheckButtons parented to it).
 local function Boxes(row)
 	local out = {}
 	for _, f in ipairs(Stub.frames) do
@@ -528,7 +528,7 @@ local function Keys(t)
 	return k
 end
 
--- A row Quick Toggle never touches, for comparison.
+-- A row Option Pins never touches, for comparison.
 local plain = CreateFrame("Frame", nil, UIParent)
 plain.data = iAutoLoot.data
 
@@ -558,7 +558,7 @@ check(({ ib[1]:GetPoint(1) })[4] == 17, "boxes follow the row's indent")
 -- Tick the floating-button box.
 b[1]:SetChecked(true)
 b[1].scripts.OnClick(b[1])
-local fl = _G["QuickToggle_autoLootDefault_float_Float"]
+local fl = _G["OptionPins_autoLootDefault_float_Float"]
 check(fl ~= nil and fl:IsShown(), "ticking the first box adds a floating button")
 eq(QT.all["autoLootDefault@float"].kind, "float", "registered as a floating button")
 eq(fl.text:GetText(), "Auto Loot", "floating button shows the setting's name")
@@ -571,21 +571,21 @@ eq(fl.icon.texture, "Interface\\RaidFrame\\ReadyCheck-Ready", "green check while
 fl.scripts.OnClick(fl, "LeftButton")
 eq(Stub.cvars.autoLootDefault, "0", "and off again")
 fl.scripts.OnClick(fl, "RightButton")
-eq(QuickToggleMenu:IsShown(), true, "right-click on a floating button opens the menu")
+eq(OptionPinsMenu:IsShown(), true, "right-click on a floating button opens the menu")
 local found
-for i, row in ipairs(QuickToggleMenu.rows) do
+for i, row in ipairs(OptionPinsMenu.rows) do
 	if row:IsShown() and row.label:GetText() == "Auto Loot" then found = i end
 end
 check(found ~= nil, "menu lists the new floating button")
 local hdr = {}
-for _, fs in ipairs(QuickToggleMenu.headers) do if fs:IsShown() then hdr[#hdr + 1] = fs:GetText() end end
+for _, fs in ipairs(OptionPinsMenu.headers) do if fs:IsShown() then hdr[#hdr + 1] = fs:GetText() end end
 eq(table.concat(hdr, ","), "Minimap buttons,Floating buttons,Slider panel", "menu has a section per kind in use")
-QuickToggleMenu:Hide()
+OptionPinsMenu:Hide()
 
 -- Tick the minimap-button box.
 b[2]:SetChecked(true)
 b[2].scripts.OnClick(b[2])
-local bub = _G["QuickToggle_autoLootDefault_bubble_Button"]
+local bub = _G["OptionPins_autoLootDefault_bubble_Button"]
 check(bub ~= nil and bub:IsShown(), "ticking the second box adds a minimap button")
 eq(bub.parent, Minimap, "on the minimap")
 eq(bub.label:GetText(), "AL", "bubble shows the initials in yellow")
@@ -603,7 +603,7 @@ Stub.alt = true
 bub.scripts.OnClick(bub, "LeftButton")
 Stub.alt = false
 eq(bub:IsShown(), false, "alt-click removes the minimap button")
-eq(QuickToggleDB.buttons["autoLootDefault@bubble"].enabled, false, "and saves that")
+eq(OptionPinsDB.buttons["autoLootDefault@bubble"].enabled, false, "and saves that")
 eq(Stub.cvars.autoLootDefault, cvBefore, "the setting itself is not changed")
 check(Stub.LastPrint():find("Auto Loot button removed") ~= nil, "says it was removed and how to add it back")
 eq(b[2]:GetChecked(), false, "its box in the Options window unticks")
@@ -637,7 +637,7 @@ eq(fl.icon.texture, "Interface\\RaidFrame\\ReadyCheck-NotReady", "floating butto
 b[1]:SetChecked(false)
 b[1].scripts.OnClick(b[1])
 eq(fl:IsShown(), false, "unticking removes the floating button")
-eq(QuickToggleDB.floats["autoLootDefault@float"].enabled, false, "and saves that")
+eq(OptionPinsDB.floats["autoLootDefault@float"].enabled, false, "and saves that")
 local r1b = Stub.ShowRow(iAutoLoot)
 local b2 = Boxes(r1b)
 eq(b2[1]:GetChecked(), false, "a fresh row shows the first box unticked")
@@ -650,7 +650,7 @@ local rt = Stub.ShowRow(iTips)
 local tb = Boxes(rt)
 tb[1]:SetChecked(true)
 tb[1].scripts.OnClick(tb[1])
-local tf = _G["QuickToggle_hideTips_float_Float"]
+local tf = _G["OptionPins_hideTips_float_Float"]
 eq(tf.icon.texture, "Interface\\RaidFrame\\ReadyCheck-Ready", "inverted setting reads as on")
 tf.scripts.OnClick(tf, "LeftButton")
 eq(Stub.cvars.hideTips, "1", "turning 'Show Tips' off writes hideTips = 1")
@@ -662,7 +662,7 @@ local cb = Boxes(rc)
 eq(cb[1].kind .. "/" .. cb[2].kind, "float/bubble", "dropdown rows get the same two boxes")
 cb[1]:SetChecked(true)
 cb[1].scripts.OnClick(cb[1])
-local cf = _G["QuickToggle_cameraSmoothStyle_float_Float"]
+local cf = _G["OptionPins_cameraSmoothStyle_float_Float"]
 eq(cf.text:GetText(), "Camera Following Style: Smart", "cycle button shows name and current choice")
 eq(cf.icon:IsShown(), false, "no check/X icon on a cycle button")
 cf.scripts.OnClick(cf, "LeftButton")
@@ -681,7 +681,7 @@ check(tipText:find("shift%-click") ~= nil, "cycle tooltip mentions shift-click")
 cf.scripts.OnLeave(cf)
 cb[2]:SetChecked(true)
 cb[2].scripts.OnClick(cb[2])
-local cbub = _G["QuickToggle_cameraSmoothStyle_bubble_Button"]
+local cbub = _G["OptionPins_cameraSmoothStyle_bubble_Button"]
 eq(cbub.label:GetText(), "A", "dropdown bubble shows the current choice (Always), not the setting's initials")
 cbub.scripts.OnClick(cbub, "LeftButton")
 eq(cbub.label:GetText(), "N", "and follows it (Never)")
@@ -702,11 +702,11 @@ eq(im and im.kind, "cycle", "Character Models read as a dropdown")
 eq(im.backing, "direct", "applied through C_GameRules, not Blizzard's setter")
 local rcm = Stub.ShowRow(iModels)
 local cmb = Boxes(rcm)
-eq(QuickToggleDB.allowProxy, false, "(Blizzard code not allowed)")
+eq(OptionPinsDB.allowProxy, false, "(Blizzard code not allowed)")
 eq(cmb[1]:IsEnabled() and cmb[2]:IsEnabled(), true, "Character Models boxes work without the Blizzard-code switch")
 cmb[2]:SetChecked(true)
 cmb[2].scripts.OnClick(cmb[2])
-local cm = _G["QuickToggle_PROXY_CHARACTER_MODELS_TOGGLE_bubble_Button"]
+local cm = _G["OptionPins_PROXY_CHARACTER_MODELS_TOGGLE_bubble_Button"]
 check(cm and cm:IsShown(), "Character Models minimap button added")
 eq(cm.label:GetText(), "HD", "shows HD while HD models are active")
 check(cm.label.color[1] == 1 and cm.label.color[3] == 0, "in yellow")
@@ -729,7 +729,7 @@ Stub.game.sd = false
 Stub.Tick(0.6)
 cmb[1]:SetChecked(true)
 cmb[1].scripts.OnClick(cmb[1])
-local cmf = _G["QuickToggle_PROXY_CHARACTER_MODELS_TOGGLE_float_Float"]
+local cmf = _G["OptionPins_PROXY_CHARACTER_MODELS_TOGGLE_float_Float"]
 eq(cmf.text:GetText(), "Character Models: High Definition", "floating button shows the choice in full")
 cmf.scripts.OnClick(cmf, "LeftButton")
 eq(cmf.text:GetText(), "Character Models: Standard Definition", "and follows it")
@@ -766,12 +766,12 @@ eq(sb[1]:IsEnabled(), false, "proxy setting boxes are disabled by default")
 sb[1].scripts.OnEnter(sb[1])
 check(table.concat(GameTooltip.lines, " "):find("runs Blizzard code") ~= nil, "tooltip explains why")
 sb[1].scripts.OnLeave(sb[1])
-Stub.addonSettings.QuickToggle_AllowProxy:SetValue(true)
-eq(QuickToggleDB.allowProxy, true, "the Options > AddOns switch allows them")
+Stub.addonSettings.OptionPins_AllowProxy:SetValue(true)
+eq(OptionPinsDB.allowProxy, true, "the Options > AddOns switch allows them")
 eq(sb[1]:IsEnabled(), true, "boxes enable at once")
 sb[1]:SetChecked(true)
 sb[1].scripts.OnClick(sb[1])
-local pf = _G["QuickToggle_PROXY_SELF_CAST_float_Float"]
+local pf = _G["OptionPins_PROXY_SELF_CAST_float_Float"]
 pf.scripts.OnClick(pf, "LeftButton")
 eq(sSelfCast.value, true, "proxy setting changed through Blizzard's setting object")
 local last = Stub.proxyCalls[#Stub.proxyCalls]
@@ -784,14 +784,14 @@ eq(#Stub.proxyCalls, nCalls, "never called in combat")
 eq(sSelfCast.value, true, "value unchanged in combat")
 check(Stub.LastPrint():find("in combat") ~= nil, "says why")
 Stub.Slash("blizzard off")
-eq(QuickToggleDB.allowProxy, false, "/qt blizzard off")
+eq(OptionPinsDB.allowProxy, false, "/pins blizzard off")
 eq(pf:IsShown(), false, "proxy controls hide when not allowed")
 eq(sb[1]:IsEnabled(), false, "and their boxes grey out")
 Stub.Slash("blizzard on")
-eq(pf:IsShown(), true, "/qt blizzard on brings them back")
+eq(pf:IsShown(), true, "/pins blizzard on brings them back")
 Stub.Slash("blizzard off")
 
--- Restart-only setting: no quick toggle.
+-- Restart-only setting: can't be pinned.
 local rw = Stub.ShowRow(iWindowed)
 local wb = Boxes(rw)
 eq(wb[1]:IsEnabled() or wb[2]:IsEnabled(), false, "restart-only setting boxes are disabled")
@@ -808,15 +808,15 @@ eq(fb[3].kind .. "/" .. fb[4].kind, "block/slider", "combined row: slider part g
 check(({ fb[3]:GetPoint(1) })[1] == "RIGHT", "second pair sits at the row's right edge")
 fb[3]:SetChecked(true)
 fb[3].scripts.OnClick(fb[3])
-local blk = _G["QuickToggle_maxFPS_block_Block"]
+local blk = _G["OptionPins_maxFPS_block_Block"]
 check(blk ~= nil and blk:IsShown(), "ticking the slider's first box adds a floating slider block")
-local bsl = _G["QuickToggle_maxFPS_block_Slider"]
+local bsl = _G["OptionPins_maxFPS_block_Slider"]
 eq(bsl.minV .. "-" .. bsl.maxV .. "/" .. bsl.step, "8-200/1", "block uses Blizzard's range and step")
 eq(bsl:GetValue(), 60, "block starts at the game's value")
 eq(blk.row.value:GetText(), "60 fps", "uses Blizzard's own value format")
 bsl:SetValue(144)
 eq(Stub.cvars.maxFPS, "144", "moving the block's slider sets the setting")
-eq(QuickToggleDB.undo.maxFPS, 60, "undo point recorded")
+eq(OptionPinsDB.undo.maxFPS, 60, "undo point recorded")
 fb[4]:SetChecked(true)
 fb[4].scripts.OnClick(fb[4])
 local prow = QT.panel.rows["maxFPS@slider"]
@@ -828,21 +828,21 @@ eq(Stub.cvars.maxFPS, "60", "undo from the panel row")
 eq(bsl:GetValue(), 60, "block moves back too")
 eq(blk.row.undo:IsEnabled(), false, "block's undo button clears too")
 bsl.scripts.OnMouseUp(bsl, "RightButton")
-eq(QuickToggleMenu:IsShown(), true, "right-click on a floating slider opens the menu")
-QuickToggleMenu:Hide()
+eq(OptionPinsMenu:IsShown(), true, "right-click on a floating slider opens the menu")
+OptionPinsMenu:Hide()
 blk.scripts.OnMouseUp(blk, "RightButton")
-eq(QuickToggleMenu:IsShown(), true, "right-click on a block's background opens the menu")
-QuickToggleMenu:Hide()
+eq(OptionPinsMenu:IsShown(), true, "right-click on a block's background opens the menu")
+OptionPinsMenu:Hide()
 fb[1]:SetChecked(true)
 fb[1].scripts.OnClick(fb[1])
-check(_G["QuickToggle_maxFPSToggle_float_Float"]:IsShown(), "combined row's checkbox part works too")
+check(_G["OptionPins_maxFPSToggle_float_Float"]:IsShown(), "combined row's checkbox part works too")
 
 -- Block drag, lock and reset.
 blk.scripts.OnDragStart(blk)
 eq(blk.moving, true, "block drags when unlocked")
 blk:ClearAllPoints(); blk:SetPoint("CENTER", UIParent, "CENTER", 300, 10)
 blk.scripts.OnDragStop(blk)
-eq(QuickToggleDB.blocks["maxFPS@block"].pos[3], 300, "block position saved")
+eq(OptionPinsDB.blocks["maxFPS@block"].pos[3], 300, "block position saved")
 blk.moving = nil
 Stub.Slash("lock")
 blk.scripts.OnDragStart(blk)
@@ -853,10 +853,10 @@ Stub.Slash("unlock")
 fl.scripts.OnDragStart(fl)
 fl:ClearAllPoints(); fl:SetPoint("CENTER", UIParent, "CENTER", -50, 70)
 fl.scripts.OnDragStop(fl)
-eq(QuickToggleDB.floats["autoLootDefault@float"].pos[3], -50, "floating button position saved")
+eq(OptionPinsDB.floats["autoLootDefault@float"].pos[3], -50, "floating button position saved")
 Stub.Slash("reset")
-eq(QuickToggleDB.blocks["maxFPS@block"].pos, nil, "/qt reset clears block positions")
-eq(QuickToggleDB.floats["autoLootDefault@float"].pos, nil, "and floating button positions")
+eq(OptionPinsDB.blocks["maxFPS@block"].pos, nil, "/pins reset clears block positions")
+eq(OptionPinsDB.floats["autoLootDefault@float"].pos, nil, "and floating button positions")
 
 -- Featured controls: Brightness and Music rows drive the existing ones.
 local rb = Stub.ShowRow(iBright)
@@ -872,9 +872,9 @@ bb[2].scripts.OnClick(bb[2])
 eq(QT.panel.rows.brightness.frame:IsShown(), true, "re-ticking shows it again")
 bb[1]:SetChecked(true)
 bb[1].scripts.OnClick(bb[1])
-local bblk = _G["QuickToggle_Brightness_block_Slider"]
+local bblk = _G["OptionPins_Brightness_block_Slider"]
 bblk:SetValue(70)
-eq(QuickToggleDB.undo.Brightness, 50, "a Brightness block shares the panel row's undo point")
+eq(OptionPinsDB.undo.Brightness, 50, "a Brightness block shares the panel row's undo point")
 eq(QT.panel.rows.brightness.undo:IsEnabled(), true, "panel row's undo lights up from the block")
 Stub.Slash("brightness undo")
 eq(bblk:GetValue(), 50, "undo from chat moves the block back")
@@ -892,7 +892,7 @@ local rg = Stub.ShowRow(iGamma)
 local gb = Boxes(rg)
 gb[1]:SetChecked(true)
 gb[1].scripts.OnClick(gb[1])
-local gblk = _G["QuickToggle_Gamma_block_Slider"]
+local gblk = _G["OptionPins_Gamma_block_Slider"]
 eq(gblk.step, 0.1, "gamma block steps 0.1")
 gblk.scripts.OnMouseWheel(gblk, 1)
 eq(Stub.cvars.Gamma, "1.1", "gamma block wheel")
@@ -912,39 +912,39 @@ eq(#Boxes(raddon), 0, "add-on settings (ours included) get no boxes")
 
 -- Slash commands and the list cover the new kinds.
 Stub.Slash("autolootdefault@float")
-eq(Stub.cvars.autoLootDefault, "1", "/qt <key> works for generic toggles, any case")
+eq(Stub.cvars.autoLootDefault, "1", "/pins <key> works for generic toggles, any case")
 Stub.Slash("maxfps@block 120")
-eq(Stub.cvars.maxFPS, "120", "/qt <key> <value> works for floating sliders")
+eq(Stub.cvars.maxFPS, "120", "/pins <key> <value> works for floating sliders")
 Stub.Slash("maxfps@block undo")
 eq(Stub.cvars.maxFPS, "60", "and undo")
 local n2 = #Stub.printed
 Stub.Slash("list")
 local listed = table.concat(Stub.printed, "\n", n2 + 1)
-check(listed:find("floating button") and listed:find("floating slider"), "/qt list covers floating buttons and sliders")
+check(listed:find("floating button") and listed:find("floating slider"), "/pins list covers floating buttons and sliders")
 Stub.Slash("disable autolootdefault@bubble")
-eq(bub:IsShown(), false, "/qt disable works on generic keys")
+eq(bub:IsShown(), false, "/pins disable works on generic keys")
 Stub.Slash("enable autolootdefault@bubble")
 
 -- Opening Options from the menu.
 Stub.openedCategory = nil
 Stub.Slash("options")
-eq(Stub.openedCategory, Stub.addonCategories[1]:GetID(), "/qt options opens Options at the Quick Toggle page")
-check(Stub.LastPrint():find("two Quick Toggle boxes") ~= nil, "and explains the boxes")
+eq(Stub.openedCategory, Stub.addonCategories[1]:GetID(), "/pins options opens Options at the Option Pins page")
+check(Stub.LastPrint():find("two Option Pins boxes") ~= nil, "and explains the boxes")
 QT:OpenMenu(UIParent)
-QuickToggleMenu.options.scripts.OnClick(QuickToggleMenu.options)
-eq(QuickToggleMenu:IsShown(), false, "menu's 'Add more' button closes the menu")
-QuickToggleMenu.proxy:SetChecked(true)
-QuickToggleMenu.proxy.scripts.OnClick(QuickToggleMenu.proxy)
-eq(QuickToggleDB.allowProxy, true, "menu has the 'allow Blizzard code' switch")
+OptionPinsMenu.options.scripts.OnClick(OptionPinsMenu.options)
+eq(OptionPinsMenu:IsShown(), false, "menu's 'Add more' button closes the menu")
+OptionPinsMenu.proxy:SetChecked(true)
+OptionPinsMenu.proxy.scripts.OnClick(OptionPinsMenu.proxy)
+eq(OptionPinsDB.allowProxy, true, "menu has the 'allow Blizzard code' switch")
 Stub.Slash("blizzard off")
 
 -------------------------------------------------------------------------------
 -- /reload: ticked controls come back
 -------------------------------------------------------------------------------
 -------------------------------------------------------------------------------
--- Section brackets: "Quick Toggle" underlined, a bar down the side, a branch per row
+-- Section brackets: "Option Pins" underlined, a bar down the side, a branch per row
 -------------------------------------------------------------------------------
-local ovl = QuickToggleSectionFrames
+local ovl = OptionPinsSectionFrames
 check(ovl ~= nil, "section overlay created")
 eq(ovl.parent, SettingsPanel, "on the Options window, so it only runs while Options is open")
 eq(ovl.clips, true, "clipped to the list area")
@@ -982,14 +982,14 @@ local function shownTicks()
 end
 eq(shownBrackets(), 2, "one bracket per section that has boxes (Controls, Mouse); none for Keys")
 local c = BR[1]
-eq(c.label:GetText(), "Quick Toggle", "label text")
+eq(c.label:GetText(), "Option Pins", "label text")
 eq(c.label.fontSize, nil, "in the game's own small label font, not shrunk")
 check(c.label.color[1] == 1 and c.label.color[3] == 0, "yellow")
 local lp = { c.label:GetPoint(1) }
 check(lp[1] == "BOTTOMLEFT" and lp[2] == fA and lp[4] == -6, "label sits above the section's first row, over the bar")
 local up = { c.underline:GetPoint(1) }
 check(c.underline:IsShown() and up[2] == c.label and up[3] == "BOTTOMLEFT", "underlined")
-eq(c.underline.w, #"Quick Toggle" * 6 + 2, "underline as wide as the words")
+eq(c.underline.w, #"Option Pins" * 6 + 2, "underline as wide as the words")
 eq(c.underline.h, 2, "2 px thick")
 local bp1, bp2 = { c.bar:GetPoint(1) }, { c.bar:GetPoint(2) }
 check(bp1[2] == c.underline and bp1[1] == "TOPLEFT", "bar starts at the underline's left end")
@@ -1043,33 +1043,37 @@ SettingsListElementMixin.Init(rf2, iAutoLoot)
 eq(pairFrame:IsShown(), false, "hidden when the row is reused for a single setting")
 
 -- An old hand-made SD/HD button (2.0 and earlier) becomes the Character Models button.
-QuickToggleDB.buttons["PROXY_CHARACTER_MODELS_TOGGLE@bubble"] = nil
-QuickToggleDB.buttons.sdhd = { enabled = true, angle = 123 }
-local savedDB = QuickToggleDB
+OptionPinsDB.buttons["PROXY_CHARACTER_MODELS_TOGGLE@bubble"] = nil
+OptionPinsDB.buttons.sdhd = { enabled = true, angle = 123 }
+local savedDB = OptionPinsDB
 local keep = { UIParent, Minimap }
 Stub.frames = keep
 SettingsListElementMixin.Init = Stub.origRowInit
 Stub.addonCategories = {}
-QuickToggle = nil
-Stub.LoadAddon(addonDir, "Option_Pin")
-local QT2 = QuickToggle
+OptionPins = nil
+-- Reload as if the settings file was saved by Quick Toggle, the add-on's old name.
+QuickToggleDB = savedDB
+OptionPinsDB = nil
+Stub.LoadAddon(addonDir, "Option_Pins")
+local QT2 = OptionPins
 check(QT2 ~= QT, "addon reloaded")
-eq(QuickToggleDB, savedDB, "saved variables carried over")
-check(QT2.all["autoLootDefault@float"] and _G["QuickToggle_autoLootDefault_float_Float"]:IsShown(), "floating button is back after a reload")
-check(QT2.all["autoLootDefault@bubble"] and _G["QuickToggle_autoLootDefault_bubble_Button"]:IsShown(), "minimap button is back")
-check(QT2.all["maxFPS@block"] and _G["QuickToggle_maxFPS_block_Block"]:IsShown(), "floating slider is back")
+eq(OptionPinsDB, savedDB, "settings saved under the old Quick Toggle name carry over")
+eq(QuickToggleDB, nil, "and the old name is cleared so it isn't saved again")
+check(QT2.all["autoLootDefault@float"] and _G["OptionPins_autoLootDefault_float_Float"]:IsShown(), "floating button is back after a reload")
+check(QT2.all["autoLootDefault@bubble"] and _G["OptionPins_autoLootDefault_bubble_Button"]:IsShown(), "minimap button is back")
+check(QT2.all["maxFPS@block"] and _G["OptionPins_maxFPS_block_Block"]:IsShown(), "floating slider is back")
 check(QT2.panel.rows["maxFPS@slider"] and QT2.panel.rows["maxFPS@slider"].frame:IsShown(), "shared panel row is back")
 eq(QT2.all["Sound_EnableMusic@float"], nil, "nothing that was never ticked is created")
 eq(QT2.all["PROXY_SELF_CAST@float"] ~= nil, true, "proxy control restored (it was ticked)")
-eq(_G["QuickToggle_PROXY_SELF_CAST_float_Float"]:IsShown(), false, "but stays hidden while Blizzard code is not allowed")
+eq(_G["OptionPins_PROXY_SELF_CAST_float_Float"]:IsShown(), false, "but stays hidden while Blizzard code is not allowed")
 local rr = Stub.ShowRow(iAutoLoot)
 local rrb = Boxes(rr)
 eq(rrb[1]:GetChecked() and rrb[2]:GetChecked(), true, "boxes in the Options window show the restored state")
 eq(#QT2.floats, 6, "all six ticked floating buttons restored")
-local cm2 = _G["QuickToggle_PROXY_CHARACTER_MODELS_TOGGLE_bubble_Button"]
+local cm2 = _G["OptionPins_PROXY_CHARACTER_MODELS_TOGGLE_bubble_Button"]
 check(QT2.all["PROXY_CHARACTER_MODELS_TOGGLE@bubble"] and cm2:IsShown(), "old SD/HD button carried over as the Character Models button")
-eq(QuickToggleDB.buttons["PROXY_CHARACTER_MODELS_TOGGLE@bubble"].angle, 123, "at the same spot on the ring")
-eq(QuickToggleDB.buttons.sdhd, nil, "old entry removed")
+eq(OptionPinsDB.buttons["PROXY_CHARACTER_MODELS_TOGGLE@bubble"].angle, 123, "at the same spot on the ring")
+eq(OptionPinsDB.buttons.sdhd, nil, "old entry removed")
 eq(cm2.label:GetText(), "HD", "showing HD")
 local nFloats, nBlocks, nBubbles = #QT2.floats, #QT2.blocks, #QT2.toggles
 Stub.Fire("SETTINGS_LOADED")

@@ -17,12 +17,12 @@
 	  saved per setting, so a panel row and a block for the same setting share it, and it
 	  survives a /reload.
 	* Right-click anywhere on a panel or block (a label, a slider, an undo button) to open
-	  the Quick Toggle menu.
+	  the Option Pins menu.
 	* Controls follow the game: if the setting is changed in Options they move to match.
 	* Clamp and Same keep fractional steps (gamma moves in 0.1s) exact.
 ]]
 
-local QT = QuickToggle
+local QT = OptionPins
 
 local ROW_H = 24
 local PAD = 6
@@ -46,7 +46,7 @@ local function Same(a, b)
 	return a ~= nil and b ~= nil and math.abs(a - b) < 0.001
 end
 
--- "0" for whole numbers, "0.3" otherwise: for ranges in usage lines and /qt list.
+-- "0" for whole numbers, "0.3" otherwise: for ranges in usage lines and /pins list.
 local function Num(v)
 	if v == math.floor(v) then return string.format("%d", v) end
 	return (string.format("%.2f", v):gsub("0+$", ""))
@@ -59,7 +59,7 @@ end
 
 --[[
 	def = {
-		key = "brightness",          -- saved variables and /qt <key>
+		key = "brightness",          -- saved variables and /pins <key>
 		name = "Brightness",         -- row label, menu entry
 		cvar = "Brightness",         -- the console variable it drives (or give Get and Set)
 		min = 0, max = 100, step = 1,
@@ -73,7 +73,7 @@ end
 	}
 ]]
 local function SliderDefaults(def)
-	assert(def.min and def.max and (def.cvar or (def.Get and def.Set)), "Quick Toggle: bad slider definition")
+	assert(def.min and def.max and (def.cvar or (def.Get and def.Set)), "Option Pins: bad slider definition")
 	def.step = def.step or 1
 	def.rangeText = Num(def.min) .. "-" .. Num(def.max)
 	def.events = def.events or { "CVAR_UPDATE" }
@@ -383,7 +383,7 @@ function QT:SliderCommand(key, rest)
 	else
 		local n = tonumber((rest:gsub("%%", "")))
 		if not n or n < def.min or n > def.max then
-			self.Print(string.format("usage: /qt %s <%s> or /qt %s undo", key, def.rangeText, key))
+			self.Print(string.format("usage: /pins %s <%s> or /pins %s undo", key, def.rangeText, key))
 			return
 		end
 		if self:SetSlider(key, n) and self:DB().announce then
@@ -414,7 +414,7 @@ end
 
 local function EnsurePanel()
 	if panel then return panel end
-	panel = CreateHolder("QuickToggleSliderPanel", function(pos) QT:DB().sliderPos = pos end)
+	panel = CreateHolder("OptionPinsSliderPanel", function(pos) QT:DB().sliderPos = pos end)
 	panel.rows = {}
 	QT.panel = panel
 	QT:PlaceSliderPanel()
@@ -461,7 +461,7 @@ function QT:SetupSliders()
 	EnsurePanel()
 	for _, def in ipairs(self.sliders) do
 		if not panel.rows[def.key] then
-			panel.rows[def.key] = CreateRow(def, panel, "QuickToggle_" .. SafeName(def.key))
+			panel.rows[def.key] = CreateRow(def, panel, "OptionPins_" .. SafeName(def.key))
 		end
 		self:Settings(def.key)
 	end
@@ -512,7 +512,7 @@ end
 
 local function SetupBlock(def)
 	if not QT.blockFrames[def.key] then
-		local base = "QuickToggle_" .. SafeName(def.key)
+		local base = "OptionPins_" .. SafeName(def.key)
 		local f = CreateHolder(base .. "_Block", function(pos) QT:Settings(def.key).pos = pos end)
 		f.row = CreateRow(def, f, base)
 		f.row.frame:SetPoint("TOPLEFT", f, "TOPLEFT", PAD, -PAD)

@@ -1,0 +1,9 @@
+<Bindings>
+	<!-- Loaded by the client automatically; never list this file in the .toc. -->
+	<Binding name="OPTIONPINS_MENU" category="ADDONS">
+		OptionPins_Press("menu")
+	</Binding>
+	<Binding name="OPTIONPINS_MUSIC" category="ADDONS">
+		OptionPins_Press("music")
+	</Binding>
+</Bindings>

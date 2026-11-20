@@ -5,11 +5,11 @@
 	    Texture Quality: High   cycle setting: click for the next choice, shift-click to go back
 
 	The yellow text is the setting's name, as the Options window shows it. Left-click
-	flips or cycles it, right-click opens the Quick Toggle menu, drag moves it (unless the
+	flips or cycles it, right-click opens the Option Pins menu, drag moves it (unless the
 	menu's lock is on). Uses the same definition shape as minimap bubbles (Core.lua).
 ]]
 
-local QT = QuickToggle
+local QT = OptionPins
 
 local H = 24
 local ICON = 16
@@ -72,7 +72,7 @@ local function RefreshFloat(def)
 end
 
 local function CreateFloat(def)
-	local f = CreateFrame("Button", "QuickToggle_" .. def.key:gsub("[^%w_]", "_") .. "_Float", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+	local f = CreateFrame("Button", "OptionPins_" .. def.key:gsub("[^%w_]", "_") .. "_Float", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
 	f.def = def
 	f:SetSize(100, H)
 	f:SetFrameStrata("MEDIUM")

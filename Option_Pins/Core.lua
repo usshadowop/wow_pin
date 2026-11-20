@@ -1,5 +1,5 @@
 --[[
-	Quick Toggle  -  World of Warcraft: Forever (interface 16001)
+	Option Pins  -  World of Warcraft: Forever (interface 16001)
 
 	Quick-access controls for game settings, in four kinds:
 
@@ -28,7 +28,7 @@ local QT = {
 	blocks = {}, blockByKey = {},           -- free-floating slider blocks (Sliders.lua)
 	all = {},                               -- key -> def, every kind
 }
-_G.QuickToggle = QT
+_G.OptionPins = QT
 
 -- One entry per element kind. Floating.lua and Sliders.lua fill in Setup / Refresh /
 -- RefreshAll / Sync / Reset for theirs; the bubble ones are below.
@@ -58,7 +58,7 @@ local DEFAULTS = {
 	sliderPos = false, -- slider panel { point, relPoint, x, y } relative to UIParent; false = default
 }
 
-local db -- QuickToggleDB after ADDON_LOADED
+local db -- OptionPinsDB after ADDON_LOADED
 function QT:DB() return db end
 
 local POLL = 0.5     -- seconds between re-reads of every setting
@@ -67,7 +67,7 @@ local YELLOW = { 1, 0.82, 0 }
 QT.YELLOW = YELLOW
 
 local function Print(msg)
-	print("|cff33ff99Quick Toggle:|r " .. msg)
+	print("|cff33ff99Option Pins:|r " .. msg)
 end
 QT.Print = Print
 
@@ -80,7 +80,7 @@ local RegisterDefEvents -- set in the events section
 --[[
 	Bubble and float defs (on/off or cycle settings):
 	def = {
-		key = "music",               -- saved variables, /qt <key>, bindings
+		key = "music",               -- saved variables, /pins <key>, bindings
 		name = "Music",              -- menu and tooltip title
 		defaultAngle = 200,          -- bubbles: where on the minimap ring it first appears (0 = right, 90 = top)
 		defaultEnabled = true,       -- shown until the user unticks it (default true)
@@ -90,7 +90,7 @@ local RegisterDefEvents -- set in the events section
 		Next = function(value) return other end,                -- optional, default `not value`
 		Prev = function(value) return other end,                -- optional, shift-click; default Next
 		Describe = function(value) return "music on" end,       -- for chat lines
-		Parse = function(text) return value end,                -- optional, for "/qt music off"
+		Parse = function(text) return value end,                -- optional, for "/pins music off"
 		isToggle = true,                                        -- on/off (check / red X) vs cycle
 		Create = function(button, disc) end,                    -- bubbles: build textures once
 		Update = function(button, value) end,                   -- bubbles: draw the current value
@@ -101,9 +101,9 @@ local RegisterDefEvents -- set in the events section
 ]]
 function QT:RegisterElement(kind, def)
 	local k = self.kinds[kind]
-	assert(k, "Quick Toggle: unknown kind " .. tostring(kind))
-	assert(type(def) == "table" and def.key and def.name, "Quick Toggle: bad definition")
-	assert(not self.all[def.key], "Quick Toggle: duplicate key " .. tostring(def.key))
+	assert(k, "Option Pins: unknown kind " .. tostring(kind))
+	assert(type(def) == "table" and def.key and def.name, "Option Pins: bad definition")
+	assert(not self.all[def.key], "Option Pins: duplicate key " .. tostring(def.key))
 	def.kind = kind
 	if def.defaultEnabled == nil then def.defaultEnabled = true end
 	k.list[#k.list + 1] = def
@@ -117,7 +117,7 @@ function QT:RegisterElement(kind, def)
 end
 
 local function ToggleDefaults(def)
-	assert(def.Get and def.Set, "Quick Toggle: toggle needs Get and Set")
+	assert(def.Get and def.Set, "Option Pins: toggle needs Get and Set")
 	def.Describe = def.Describe or function(v) return tostring(v) end
 	def.Next = def.Next or function(v) return not v end
 	def.Prev = def.Prev or def.Next
@@ -237,14 +237,14 @@ function QT:ToggleClick(frame, mouseButton)
 	elseif IsAltKeyDown and IsAltKeyDown() then
 		if GameTooltip and GameTooltip:IsOwned(frame) then GameTooltip:Hide() end
 		self:SetEnabled(frame.def.key, false)
-		Print(self:ElementName(frame.def.key) .. " removed. Add it back from the menu (right-click another control, or /qt) or the Options window.")
+		Print(self:ElementName(frame.def.key) .. " removed. Add it back from the menu (right-click another control, or /pins) or the Options window.")
 	else
 		self:Press(frame.def.key, nil, IsShiftKeyDown and IsShiftKeyDown())
 	end
 end
 
 local function CreateButton(def)
-	local b = CreateFrame("Button", "QuickToggle_" .. def.key:gsub("[^%w_]", "_") .. "_Button", Minimap or UIParent)
+	local b = CreateFrame("Button", "OptionPins_" .. def.key:gsub("[^%w_]", "_") .. "_Button", Minimap or UIParent)
 	b.def = def
 	b:SetSize(31, 31)
 	b:SetFrameStrata("MEDIUM")
@@ -351,7 +351,7 @@ end
 function QT:Press(key, value, back)
 	local def = self.all[key]
 	if not def or not (def.kind == "bubble" or def.kind == "float") then
-		Print("no toggle called '" .. tostring(key) .. "'. /qt list shows them.")
+		Print("no toggle called '" .. tostring(key) .. "'. /pins list shows them.")
 		return false
 	end
 	local ok, reason = self:Available(def)
@@ -436,7 +436,7 @@ local fallbackMenu
 local function OpenFallbackMenu(owner)
 	local m = fallbackMenu
 	if not m then
-		m = CreateFrame("Frame", "QuickToggleMenu", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
+		m = CreateFrame("Frame", "OptionPinsMenu", UIParent, BackdropTemplateMixin and "BackdropTemplate" or nil)
 		fallbackMenu = m
 		m:SetFrameStrata("DIALOG")
 		m:SetSize(260, 100)
@@ -448,7 +448,7 @@ local function OpenFallbackMenu(owner)
 		end
 		m.title = m:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 		m.title:SetPoint("TOPLEFT", 12, -10)
-		m.title:SetText("Quick Toggle")
+		m.title:SetText("Option Pins")
 		m.close = CreateFrame("Button", nil, m, "UIPanelCloseButton")
 		m.close:SetPoint("TOPRIGHT", 2, 2)
 		m.close:SetScript("OnClick", function() m:Hide() end)
@@ -475,7 +475,7 @@ local function OpenFallbackMenu(owner)
 		m.options:SetSize(110, 22)
 		m.options:SetText("Add more...")
 		m.options:SetScript("OnClick", function() m:Hide(); OpenGameOptions() end)
-		if UISpecialFrames then tinsert(UISpecialFrames, "QuickToggleMenu") end
+		if UISpecialFrames then tinsert(UISpecialFrames, "OptionPinsMenu") end
 	end
 
 	local y, i, h = -30, 0, 0
@@ -545,7 +545,7 @@ function QT:OpenMenu(owner)
 	if not db then return end
 	if MenuUtil and MenuUtil.CreateContextMenu then
 		MenuUtil.CreateContextMenu(owner or UIParent, function(_, root)
-			root:CreateTitle("Quick Toggle")
+			root:CreateTitle("Option Pins")
 			local function AddRow(def)
 				local ok, reason = QT:Available(def)
 				local box = root:CreateCheckbox(def.name,
@@ -586,9 +586,9 @@ end
 -- Key bindings (Bindings.xml calls this) and slash commands
 -------------------------------------------------------------------------------
 
-BINDING_NAME_QUICKTOGGLE_MENU = "Quick Toggle: open the menu"
+BINDING_NAME_OPTIONPINS_MENU = "Option Pins: open the menu"
 
-function QuickToggle_Press(key)
+function OptionPins_Press(key)
 	if not db then return end
 	if key == "menu" then
 		QT:OpenMenu(UIParent)
@@ -601,10 +601,10 @@ local function BindKey(toggleKey, key)
 	local def = QT.byKey[toggleKey]
 	key = key and key:upper()
 	if not def or not key or key == "" then
-		Print("usage: /qt key <toggle> <KEY>   e.g. /qt key music F11")
+		Print("usage: /pins key <toggle> <KEY>   e.g. /pins key music F11")
 		return
 	end
-	local action = "QUICKTOGGLE_" .. toggleKey:upper()
+	local action = "OPTIONPINS_" .. toggleKey:upper()
 	if not _G["BINDING_NAME_" .. action] then
 		Print(def.name .. " has no key binding entry (needs a line in Bindings.xml).")
 		return
@@ -623,7 +623,7 @@ local function List()
 		for _, def in ipairs(k.list) do
 			local ok, reason = QT:Available(def)
 			local s = QT:Settings(def.key)
-			Print(string.format("%s  (/qt %s)  %s %s  now: %s%s",
+			Print(string.format("%s  (/pins %s)  %s %s  now: %s%s",
 				def.name, def.key, k.noun,
 				s.enabled and "on" or "off",
 				ok and def.Describe(def.Get()) or "n/a",
@@ -636,7 +636,7 @@ local function List()
 			local ok, reason = QT:Available(def)
 			local s = QT:Settings(def.key)
 			local undo = QT:GetUndo(def)
-			Print(string.format("%s  (/qt %s <%s>|undo)  %s %s  now: %s%s%s",
+			Print(string.format("%s  (/pins %s <%s>|undo)  %s %s  now: %s%s%s",
 				def.name, def.key, def.rangeText, k.noun,
 				s.enabled and "on" or "off",
 				ok and def.Format(def.Get()) or "n/a",
@@ -646,8 +646,9 @@ local function List()
 	end
 end
 
-SLASH_QUICKTOGGLE1 = "/qt"
-SLASH_QUICKTOGGLE2 = "/quicktoggle"
+SLASH_OPTIONPINS1 = "/pins"
+SLASH_OPTIONPINS2 = "/pin"
+SLASH_OPTIONPINS3 = "/optionpins"
 
 -- Keys are matched case-insensitively (generic ones carry the game's camelCase names).
 local function FindKey(text)
@@ -658,7 +659,7 @@ local function FindKey(text)
 	end
 end
 
-SlashCmdList["QUICKTOGGLE"] = function(msg)
+SlashCmdList["OPTIONPINS"] = function(msg)
 	if not db then return end
 	msg = (msg or ""):match("^%s*(.-)%s*$")
 	local word, rest = msg:match("^(%S+)%s*(.-)$")
@@ -691,7 +692,7 @@ SlashCmdList["QUICKTOGGLE"] = function(msg)
 		if k and QT:SetEnabled(k, cmd == "enable") then
 			Print(QT:ElementName(k) .. " " .. (cmd == "enable" and "on." or "off."))
 		else
-			Print("no toggle called '" .. rest:lower() .. "'. /qt list shows them.")
+			Print("no toggle called '" .. rest:lower() .. "'. /pins list shows them.")
 		end
 	elseif cmd == "list" or cmd == "status" then
 		List()
@@ -721,7 +722,7 @@ SlashCmdList["QUICKTOGGLE"] = function(msg)
 		local t, k = rest:match("^(%S+)%s+(%S+)$")
 		BindKey(t and t:lower(), k)
 	else
-		Print("commands: /qt (menu), /qt options, /qt <toggle> [value], /qt <slider> <value>|undo, enable|disable <name>, list, show, hide, lock, unlock, reset, blizzard on|off, sound on|off, announce on|off, key <toggle> <KEY>")
+		Print("commands: /pins (menu), /pins options, /pins <toggle> [value], /pins <slider> <value>|undo, enable|disable <name>, list, show, hide, lock, unlock, reset, blizzard on|off, sound on|off, announce on|off, key <toggle> <KEY>")
 	end
 end
 
@@ -729,7 +730,7 @@ end
 -- Events and polling
 -------------------------------------------------------------------------------
 
-local ev = CreateFrame("Frame", "QuickToggleEvents", UIParent)
+local ev = CreateFrame("Frame", "OptionPinsEvents", UIParent)
 ev:RegisterEvent("ADDON_LOADED")
 ev:RegisterEvent("PLAYER_LOGIN")
 ev:RegisterEvent("PLAYER_ENTERING_WORLD")
@@ -753,8 +754,13 @@ end
 ev:SetScript("OnEvent", function(self, event, arg1, ...)
 	if event == "ADDON_LOADED" then
 		if arg1 ~= ADDON_NAME then return end
-		QuickToggleDB = QuickToggleDB or {}
-		db = QuickToggleDB
+		-- Settings saved by Quick Toggle (this add-on's old name) carry over once.
+		if OptionPinsDB == nil and type(QuickToggleDB) == "table" then
+			OptionPinsDB = QuickToggleDB
+		end
+		QuickToggleDB = nil
+		OptionPinsDB = OptionPinsDB or {}
+		db = OptionPinsDB
 		for k, v in pairs(DEFAULTS) do
 			if db[k] == nil then db[k] = (type(v) == "table") and {} or v end
 		end

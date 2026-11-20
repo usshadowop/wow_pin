@@ -1,4 +1,4 @@
--- Minimal stand-in for the WoW Forever client, just enough to load Quick Toggle headless.
+-- Minimal stand-in for the WoW Forever client, just enough to load Option Pins headless.
 local Stub = {}
 
 Stub.printed = {}
@@ -347,7 +347,7 @@ function Stub.LoadAddon(dir, name)
 end
 
 function Stub.Slash(msg)
-	SlashCmdList["QUICKTOGGLE"](msg)
+	SlashCmdList["OPTIONPINS"](msg)
 end
 
 function Stub.LastPrint() return Stub.printed[#Stub.printed] or "" end

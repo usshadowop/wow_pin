@@ -1,5 +1,5 @@
 --[[
-	Every setting in the game's Options window, as a quick toggle.
+	Every setting in the game's Options window, as an option pin.
 
 	Two small tick boxes are added at the left of each setting row in Blizzard's Options
 	window (Esc > Options):
@@ -11,7 +11,7 @@
 	checkbox with a slider or dropdown get a second pair at the row's right edge for the
 	slider or dropdown part. Hover a box to see what it does.
 
-	Each section's boxes hang off a yellow bracket: "Quick Toggle" underlined at the top, a
+	Each section's boxes hang off a yellow bracket: "Option Pins" underlined at the top, a
 	vertical bar down the left side to the bottom of the section, and a short branch from
 	the bar to each row's boxes, so it reads as an add-on addition (see "Section brackets").
 
@@ -25,17 +25,17 @@
 	* "Proxy" settings run Blizzard functions to apply (graphics presets, action bars,
 	  nameplates, voice chat...). Calling those from an addon can lead to "Interface action
 	  blocked" errors, so they are off until the user ticks "Allow settings that run
-	  Blizzard code" (menu, /qt blizzard on, or Options > AddOns > Quick Toggle), and are
+	  Blizzard code" (menu, /pins blizzard on, or Options > AddOns > Option Pins), and are
 	  never changed in combat.
 	* A few proxy settings have a plain, documented API behind them. Those are applied with
 	  that API directly instead of through Blizzard's code (DIRECT below), so they need no
 	  opt-in: Character Models (SD / HD) calls C_GameRules.SetSDHDToggleValue, the same call
 	  Blizzard's own setter and Barbershop checkbox make.
 	* Settings that only apply after a restart (ClientRestart, GxRestart, UIReload,
-	  UpdateWindow commit flags) are shown with greyed boxes: a quick toggle can't apply them.
+	  UpdateWindow commit flags) are shown with greyed boxes: a pin can't apply them.
 ]]
 
-local QT = QuickToggle
+local QT = OptionPins
 
 local infos = {}      -- variable -> info, every classified setting seen
 local infoList = {}   -- in Options order
@@ -238,13 +238,13 @@ end
 
 function QT:OptionAvailable(info)
 	if info.restart then
-		return false, "only takes effect after restarting the game, so it can't be a quick toggle"
+		return false, "only takes effect after restarting the game, so it can't be pinned"
 	end
 	if info.backing == "direct" then
 		return DIRECT[info.var].Available()
 	end
 	if info.backing == "proxy" and not self:DB().allowProxy then
-		return false, "runs Blizzard code to apply; tick 'Allow settings that run Blizzard code' in the Quick Toggle menu to use it"
+		return false, "runs Blizzard code to apply; tick 'Allow settings that run Blizzard code' in the Option Pins menu to use it"
 	end
 	return true
 end
@@ -476,7 +476,7 @@ local function BoxTooltip(box)
 	local info = box.info
 	GameTooltip:SetOwner(box, "ANCHOR_RIGHT")
 	GameTooltip:ClearLines()
-	GameTooltip:AddLine("Quick Toggle: " .. BOX_TEXT[box.kind])
+	GameTooltip:AddLine("Option Pins: " .. BOX_TEXT[box.kind])
 	GameTooltip:AddLine(info.name, 1, 1, 1)
 	local ok, reason = QT:OptionAvailable(info)
 	if not ok then
@@ -507,11 +507,11 @@ local function Line(parent, layer)
 	return t
 end
 
--- "Quick Toggle" in the game's small yellow label font.
+-- "Option Pins" in the game's small yellow label font.
 local function SectionLabel(parent)
 	local fs = parent:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
 	fs:SetTextColor(QT.YELLOW[1], QT.YELLOW[2], QT.YELLOW[3])
-	fs:SetText("Quick Toggle")
+	fs:SetText("Option Pins")
 	return fs
 end
 
@@ -580,11 +580,11 @@ local function Decorate(row, initializer)
 end
 
 -------------------------------------------------------------------------------
--- Section brackets: "Quick Toggle" + a yellow bar down each section's boxes
+-- Section brackets: "Option Pins" + a yellow bar down each section's boxes
 -------------------------------------------------------------------------------
 
 --[[
-	    Quick Toggle            label, in the game's small yellow font
+	    Option Pins            label, in the game's small yellow font
 	    ‾‾‾‾‾‾‾‾‾‾‾‾            underline
 	    |-[ ][ ] Sticky Targeting
 	    |-[ ][ ] Auto Loot
@@ -767,14 +767,14 @@ do
 	end
 	local sb = okL and type(list) == "table" and list.ScrollBox
 	if sb and type(sb.EnumerateFrames) == "function" then
-		overlay = CreateFrame("Frame", "QuickToggleSectionFrames", SettingsPanel)
+		overlay = CreateFrame("Frame", "OptionPinsSectionFrames", SettingsPanel)
 		-- The list's area, widened a little to the left for the bar, and 8 px up so the bar
 		-- meets the underline when the first row is at the very top.
 		overlay:SetPoint("TOPLEFT", sb, "TOPLEFT", BAR_X - 6, 8)
 		overlay:SetPoint("BOTTOMRIGHT", sb, "BOTTOMRIGHT", 0, 0)
 		if overlay.SetClipsChildren then overlay:SetClipsChildren(true) end
 		overlay:SetFrameLevel((sb.GetFrameLevel and sb:GetFrameLevel() or 1) + 20)
-		labels = CreateFrame("Frame", "QuickToggleSectionLabels", SettingsPanel)
+		labels = CreateFrame("Frame", "OptionPinsSectionLabels", SettingsPanel)
 		labels:SetAllPoints(sb)
 		labels:SetFrameLevel((sb.GetFrameLevel and sb:GetFrameLevel() or 1) + 21)
 		-- Children of SettingsPanel only update while the Options window is open.
@@ -826,7 +826,7 @@ local function RegisterAddOnPage()
 		return
 	end
 	local db = QT:DB()
-	local category = Settings.RegisterVerticalLayoutCategory("Quick Toggle")
+	local category = Settings.RegisterVerticalLayoutCategory("Option Pins")
 	local function Add(variable, key, tbl, name, default, tooltip, onChange)
 		local setting = Settings.RegisterAddOnSetting(category, variable, key, tbl, "boolean", name, default)
 		Settings.CreateCheckbox(category, setting, tooltip)
@@ -834,12 +834,12 @@ local function RegisterAddOnPage()
 			Settings.SetOnValueChangedCallback(variable, function() onChange() end)
 		end
 	end
-	Add("QuickToggle_Shown", "shown", db, "Show Quick Toggle controls",
-		true, "Show every Quick Toggle button and slider. Same as /qt show and /qt hide.",
+	Add("OptionPins_Shown", "shown", db, "Show Option Pins controls",
+		true, "Show every Option Pins button and slider. Same as /pins show and /pins hide.",
 		function() QT:Refresh() end)
-	Add("QuickToggle_Locked", "locked", db, "Lock buttons and sliders in place",
+	Add("OptionPins_Locked", "locked", db, "Lock buttons and sliders in place",
 		false, "Stops them being dragged by accident.")
-	Add("QuickToggle_AllowProxy", "allowProxy", db, "Allow settings that run Blizzard code",
+	Add("OptionPins_AllowProxy", "allowProxy", db, "Allow settings that run Blizzard code",
 		false, "About a third of the Options settings (graphics presets, action bars, nameplates, voice chat and others) apply by running Blizzard's own code. Changing those from an addon can cause 'Interface action blocked' errors, mostly after combat. Tick to allow them anyway; they are never changed in combat.",
 		function() QT:SetAllowProxy(db.allowProxy, true) end)
 	Settings.RegisterAddOnCategory(category)
@@ -848,7 +848,7 @@ end
 
 function QT:OpenOptions()
 	if not scanned then ScanAndRestore() end
-	self.Print("every setting in the Options window now has two Quick Toggle boxes at its left: the first makes a floating button or slider, the blue one a minimap button or a row in the slider panel.")
+	self.Print("every setting in the Options window now has two Option Pins boxes at its left: the first makes a floating button or slider, the blue one a minimap button or a row in the slider panel.")
 	if Settings and Settings.OpenToCategory and self.optionsCategory and self.optionsCategory.GetID then
 		Settings.OpenToCategory(self.optionsCategory:GetID())
 	end
