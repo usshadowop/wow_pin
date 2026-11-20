@@ -182,8 +182,8 @@ end
 -------------------------------------------------------------------------------
 
 local STACK_ANGLE = 170   -- where the stack dot first appears
-local FAN_INSET = 36      -- how far inside the ring the fan's first arc sits
-local FAN_GAP = 34        -- px between fanned dots along the arc
+local FAN_INSET = 40      -- how far inside the ring the fan's first arc sits
+local FAN_GAP = 38        -- px between fanned dots along the arc (a button is ~33 px across)
 
 local function Stack()
 	local st = db.stack

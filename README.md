@@ -68,7 +68,7 @@ minimap button, it becomes the Character Models minimap button at the same spot.
 | Untick it | remove that control |
 | Left-click a button | flip the setting, or go to the next choice for a dropdown |
 | Shift-click a dropdown's button | go to the previous choice |
-| Tick "Stack minimap buttons into one" (menu, Options > AddOns, or `/pins stack`) | fold all your Option Pins minimap buttons into one dot with three dots in it; click it to fan them out in an arc just inside the minimap ring, click again to fold them back; drag it around the ring like any other |
+| Tick "Stack minimap buttons into one" (menu, Options > AddOns, or `/pins stack`) | fold all your Option Pins minimap buttons into one dot with three dots in it; click it to fan them out in an arc just inside the minimap ring, click again to fold them back; drag it around the ring like any other (`docs/stack-mockup.png` shows it) |
 | Alt-click a minimap or floating button | remove it (the setting is left as it is); add it back from the menu or the Options window |
 | Drag a slider, click along it, or roll the mouse wheel over it | change that setting |
 | Click a slider's undo button | put the setting back where it was before you moved the slider |

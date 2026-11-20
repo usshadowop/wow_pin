@@ -1115,8 +1115,8 @@ stackB.scripts.OnLeave(stackB)
 stackB.scripts.OnClick(stackB, "LeftButton")
 eq(QT:StackState().open, true, "click opens the stack")
 local n = #stacked
-local fanR = 130 - 36
-local step = math.deg(34 / fanR)
+local fanR = 130 - 40
+local step = math.deg(38 / fanR)
 for i, def in ipairs(stacked) do
 	local b = QT.buttons[def.key]
 	eq(b:IsShown(), true, def.name .. " fanned out")
