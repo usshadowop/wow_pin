@@ -1111,11 +1111,11 @@ check(GameTooltip.lines[1] == "Option Pins (" .. #stacked .. ")", "tooltip count
 check(table.concat(GameTooltip.lines, " "):find("Music") ~= nil, "and lists them")
 stackB.scripts.OnLeave(stackB)
 
--- Click: fan out in an arc just inside the ring, centred on the stack dot.
+-- Click: fan out in an arc just outside the ring, centred on the stack dot.
 stackB.scripts.OnClick(stackB, "LeftButton")
 eq(QT:StackState().open, true, "click opens the stack")
 local n = #stacked
-local fanR = 130 - 40
+local fanR = 130 + 40
 local step = math.deg(38 / fanR)
 for i, def in ipairs(stacked) do
 	local b = QT.buttons[def.key]
@@ -1175,7 +1175,7 @@ OptionPinsMenu.stack.scripts.OnClick(OptionPinsMenu.stack)
 OptionPinsMenu:Hide()
 eq(OptionPinsDB.stack.enabled, false, "and the menu checkbox turns it off")
 
--- Lots of buttons: the fan continues on a second arc further in.
+-- Lots of buttons: the fan continues on a second arc further out.
 for i = 1, 40 do
 	local key = "fan" .. i
 	QT:Register({ key = key, name = "Fan " .. i, Get = function() return true end, Set = function() end })
@@ -1186,7 +1186,7 @@ local inner = 0
 for i = 1, 40 do
 	local p = { QT.buttons["fan" .. i]:GetPoint(1) }
 	local r = math.sqrt(p[4] * p[4] + p[5] * p[5])
-	if r < fanR - 1 then inner = inner + 1 end
+	if r > fanR + 1 then inner = inner + 1 end
 end
 check(inner > 0, "dots that don't fit on the first arc go on a second one")
 for i = 1, 40 do QT:SetEnabled("fan" .. i, false) end

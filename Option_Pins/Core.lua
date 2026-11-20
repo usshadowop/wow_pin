@@ -177,12 +177,12 @@ end
 -------------------------------------------------------------------------------
 -- Stacking: with "Stack minimap buttons" on and two or more Option Pins buttons showing,
 -- they fold into one "..." dot on the ring. Clicking it fans them out in an arc just
--- inside the ring, centred on the dot (inside, so the fan stays on screen whichever
--- corner the minimap is in); clicking it again folds them back.
+-- outside the ring, centred on the dot (more arcs further out if they don't fit);
+-- clicking it again folds them back.
 -------------------------------------------------------------------------------
 
 local STACK_ANGLE = 170   -- where the stack dot first appears
-local FAN_INSET = 40      -- how far inside the ring the fan's first arc sits
+local FAN_OUT = 40        -- how far outside the ring the fan's first arc sits (and each further arc)
 local FAN_GAP = 38        -- px between fanned dots along the arc (a button is ~33 px across)
 
 local function Stack()
@@ -200,17 +200,17 @@ local function RingPoint(b, angleDeg, r)
 	b:SetPoint("CENTER", Minimap or UIParent, "CENTER", math.cos(a) * r, math.sin(a) * r)
 end
 
--- Fan slot `i` of `n`: arcs inside the ring, centred on the stack dot's angle.
+-- Fan slot `i` of `n`: arcs outside the ring, centred on the stack dot's angle.
 local function FanPoint(b, i, n)
 	local R = MinimapRadius()
-	local radius = R - FAN_INSET
+	local radius = R + FAN_OUT
 	local arc, j, m = 0, i, n
 	while true do
 		local cap = math.max(1, math.floor(2 * math.pi * radius / FAN_GAP))
 		if j <= cap then m = math.min(m, cap) break end
 		j, m = j - cap, m - cap
 		arc = arc + 1
-		radius = radius - FAN_INSET
+		radius = radius + FAN_OUT
 	end
 	local step = math.deg(FAN_GAP / radius)
 	RingPoint(b, Stack().angle + (j - (m + 1) / 2) * step, radius)
